@@ -1,0 +1,12 @@
+nextflow.config
+work
+.nextflow
+.nextflow.log*
+.nextflow.history
+timeline*
+trace*
+dag*
+test_data
+data
+output
+downstream
