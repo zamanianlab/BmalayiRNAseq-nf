@@ -11,39 +11,35 @@ small_core=config.small_core
 sra_file = Channel.fromPath(aux_location + "SRR_Acc_List_sample.txt")
 
 // ** - Download SRA files based on text file list of SRA accession IDs
-process fetch_reads {
+// process fetch_reads {
 
-    publishDir "data/SRA/", mode: 'copy', pattern: 'meta.pipeline.txt'
+//     publishDir "data/sra/", mode: 'copy'
     
-    input:
-        file("SRR_Acc_List_sample.txt") from sra_file
+//     input:
+//         file("SRR_Acc_List_sample.txt") from sra_file
 
-    output:
-        file("meta.pipeline.txt")
-        file("*.fastq.gz")
+//     output:
+//         file("*fastq*")
 
-    script:
+//     script:
 
-    sra_list="SRR_Acc_List_sample.txt"
+//     sra_list="SRR_Acc_List_sample.txt"
 
-    """ 
+//     """ 
 
-    echo ${sra_list}
-    while read line     
-    do           
-        echo \$line >> meta.pipeline.txt
-        fastq-dump --gzip \$line 
-    done <${sra_list} 
+//     while read line     
+//     do           
+//         echo \$line
+//         fastq-dump --gzip \$line 
+//     done <${sra_list} 
 
-    """
+//     """
 
-}
-
+// }
 
 // ** - Recurse through subdirectories to get all fastqs
-fq_set = Channel.fromPath(data_location + "**/*.fastq.gz")
+fq_set = Channel.fromPath(data_location + "sra/*.fastq.gz")
                 .map { n -> [ n.getName(), n ] }
-
 
 
 // ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
@@ -57,14 +53,16 @@ process fetch_reference {
     publishDir "data/reference/", mode: 'copy'
     
     output:
-        file("${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz") into geneset_gtf
-        file("${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz") into reference_hisat
+        file("geneset.gtf.gz") into geneset_gtf
+        file("reference.fa.gz") into reference_hisat
 
     """
         echo '${release}'
         echo '${species}'
         echo '${prefix}'
         wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
 
     """
 
@@ -114,3 +112,90 @@ process build_hisat_index {
 
 }
 
+process align {
+
+    cpus large_core
+
+    publishDir "output/bam", mode: 'copy'
+
+    tag { reads }
+
+    input:
+        set val(name), file(reads) from fq_set
+        file hs2_indices from hs2_indices.first()
+
+    output:
+        set val("${prefix}"), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
+        file "${prefix}.hisat2_log.txt" into alignment_logs
+
+    script:
+        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+        prefix = reads[0].toString() - ~/(\.fastq\.gz)$/
+
+    """ 
+        hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${prefix}.sam 2> ${prefix}.hisat2_log.txt
+        samtools view -bS ${prefix}.sam > ${prefix}.unsorted.bam
+        samtools flagstat ${prefix}.unsorted.bam
+        samtools sort -@ ${small_core} -o ${prefix}.bam ${prefix}.unsorted.bam
+        samtools index -b ${prefix}.bam
+        rm *sam
+        rm *unsorted.bam
+    """
+}
+
+
+process stringtie_counts {
+
+    publishDir "output/expression", mode: 'copy'
+
+    cpus small_core
+
+    tag { srid }
+
+    input:
+        set val(srid), file(bam), file(bai) from hisat2_bams
+        file("geneset.gtf.gz") from geneset_stringtie.first()
+
+    output:
+        file("${srid}/*") into stringtie_exp
+
+    """ 
+        zcat geneset.gtf.gz > geneset.gtf
+        stringtie -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf ${bam}
+    """
+}
+
+
+
+prepDE = file("auxillary/scripts/prepDE.py")
+
+process stringtie_table_counts {
+
+    echo true
+
+    publishDir "output/diffexp", mode: 'copy'
+
+    cpus small_core
+
+    tag { sample_id }
+
+    input:
+        val(sample_file) from stringtie_exp.toSortedList()
+
+    output:
+        file ("gene_count_matrix.csv") into gene_count_matrix
+        file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+        for i in ${sample_file.flatten().join(" ")}; do
+            bn=`basename \${i}`
+            full_path=`dirname \${i}`
+            sample_name=\${full_path##*/}
+            echo "\${sample_name} \${i}"
+            mkdir -p expression/\${sample_name}
+            ln -s \${i} expression/\${sample_name}/\${bn}
+        done;
+        python ${prepDE} -i expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
