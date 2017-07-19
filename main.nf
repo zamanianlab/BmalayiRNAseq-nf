@@ -144,58 +144,58 @@ process align {
 }
 
 
-process stringtie_counts {
+// process stringtie_counts {
 
-    publishDir "output/expression", mode: 'copy'
+//     publishDir "output/expression", mode: 'copy'
 
-    cpus small_core
+//     cpus small_core
 
-    tag { srid }
+//     tag { srid }
 
-    input:
-        set val(srid), file(bam), file(bai) from hisat2_bams
-        file("geneset.gtf.gz") from geneset_stringtie.first()
+//     input:
+//         set val(srid), file(bam), file(bai) from hisat2_bams
+//         file("geneset.gtf.gz") from geneset_stringtie.first()
 
-    output:
-        file("${srid}/*") into stringtie_exp
+//     output:
+//         file("${srid}/*") into stringtie_exp
 
-    """ 
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf ${bam}
-    """
-}
+//     """ 
+//         zcat geneset.gtf.gz > geneset.gtf
+//         stringtie -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf ${bam}
+//     """
+// }
 
 
 
-prepDE = file("auxillary/scripts/prepDE.py")
+// prepDE = file("auxillary/scripts/prepDE.py")
 
-process stringtie_table_counts {
+// process stringtie_table_counts {
 
-    echo true
+//     echo true
 
-    publishDir "output/diffexp", mode: 'copy'
+//     publishDir "output/diffexp", mode: 'copy'
 
-    cpus small_core
+//     cpus small_core
 
-    tag { sample_id }
+//     tag { sample_id }
 
-    input:
-        val(sample_file) from stringtie_exp.toSortedList()
+//     input:
+//         val(sample_file) from stringtie_exp.toSortedList()
 
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
+//     output:
+//         file ("gene_count_matrix.csv") into gene_count_matrix
+//         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
-    """
-        for i in ${sample_file.flatten().join(" ")}; do
-            bn=`basename \${i}`
-            full_path=`dirname \${i}`
-            sample_name=\${full_path##*/}
-            echo "\${sample_name} \${i}"
-            mkdir -p expression/\${sample_name}
-            ln -s \${i} expression/\${sample_name}/\${bn}
-        done;
-        python ${prepDE} -i expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+//     """
+//         for i in ${sample_file.flatten().join(" ")}; do
+//             bn=`basename \${i}`
+//             full_path=`dirname \${i}`
+//             sample_name=\${full_path##*/}
+//             echo "\${sample_name} \${i}"
+//             mkdir -p expression/\${sample_name}
+//             ln -s \${i} expression/\${sample_name}/\${bn}
+//         done;
+//         python ${prepDE} -i expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
-    """
-}
+//     """
+// }
