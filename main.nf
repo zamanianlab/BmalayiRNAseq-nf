@@ -16,14 +16,14 @@ process fetch_reads {
     publishDir "data/sra/", mode: 'copy'
     
     input:
-        file("SRR_Acc_List_sample.txt") from sra_file
+        file("SRR_Acc_List.txt") from sra_file
 
     output:
         file("*fastq*")
 
     script:
 
-    sra_list="SRR_Acc_List_sample.txt"
+    sra_list="SRR_Acc_List.txt"
 
     """ 
 
