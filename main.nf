@@ -8,7 +8,7 @@ large_core=config.large_core
 small_core=config.small_core
 
 // ** - Get txt file of SRA accession IDs from 'auxillary' folder
-sra_file = Channel.fromPath(aux_location + "SRR_Acc_List_sample.txt")
+sra_file = Channel.fromPath(aux_location + "SRR_Acc_List.txt")
 
 // ** - Download SRA files based on text file list of SRA accession IDs
 process fetch_reads {
