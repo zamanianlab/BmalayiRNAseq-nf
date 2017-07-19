@@ -11,31 +11,31 @@ small_core=config.small_core
 sra_file = Channel.fromPath(aux_location + "SRR_Acc_List_sample.txt")
 
 // ** - Download SRA files based on text file list of SRA accession IDs
-// process fetch_reads {
+process fetch_reads {
 
-//     publishDir "data/sra/", mode: 'copy'
+    publishDir "data/sra/", mode: 'copy'
     
-//     input:
-//         file("SRR_Acc_List_sample.txt") from sra_file
+    input:
+        file("SRR_Acc_List_sample.txt") from sra_file
 
-//     output:
-//         file("*fastq*")
+    output:
+        file("*fastq*")
 
-//     script:
+    script:
 
-//     sra_list="SRR_Acc_List_sample.txt"
+    sra_list="SRR_Acc_List_sample.txt"
 
-//     """ 
+    """ 
 
-//     while read line     
-//     do           
-//         echo \$line
-//         fastq-dump --gzip \$line 
-//     done <${sra_list} 
+    while read line     
+    do           
+        echo \$line
+        fastq-dump --gzip \$line 
+    done <${sra_list} 
 
-//     """
+    """
 
-// }
+}
 
 // ** - Recurse through subdirectories to get all fastqs
 fq_set = Channel.fromPath(data_location + "sra/*.fastq.gz")
