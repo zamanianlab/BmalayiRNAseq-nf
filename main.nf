@@ -35,30 +35,30 @@ process fetch_SRA {
 }
 
 // ** - Covert SRA files to fastqs
-process fetch_reads {
+// process fetch_reads {
 
-    publishDir "${data}/fq/", mode: 'copy'
+//     publishDir "${data}/fq/", mode: 'copy'
     
-    input:
-        file("SRR_Acc_List.txt") from sra_file
+//     input:
+//         file("SRR_Acc_List.txt") from sra_file
 
-    output:
-        file("*")
+//     output:
+//         file("*")
 
-    script:
+//     script:
 
-    sra_list="SRR_Acc_List.txt"
+//     sra_list="SRR_Acc_List.txt"
 
-    """ 
+//     """ 
 
-    while read line     
-    do           
-        touch \$line.txt
-    done <${sra_list} 
+//     while read line     
+//     do           
+//         touch \$line.txt
+//     done <${sra_list} 
 
-    """
-//**  fastq-dump --gzip \$line  
-}
+//     """
+// //**  fastq-dump --gzip \$line  
+// }
 
 
 // ** - Recurse through subdirectories to get all fastqs
