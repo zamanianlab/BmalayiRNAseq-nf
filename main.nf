@@ -31,8 +31,9 @@ process fetch_SRA {
     done <${sra_list} 
 
     """
-//**  fastq-dump --gzip \$line  
+
 }
+
 
 // ** - Covert SRA files to fastqs
 // process fetch_reads {
@@ -66,37 +67,37 @@ process fetch_SRA {
 //                 .map { n -> [ n.getName(), n ] }
 
 
-// ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
-// release="WBPS9"
-// species="brugia_malayi"
-// prjn="PRJNA10729"
-// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
+release="WBPS9"
+species="brugia_malayi"
+prjn="PRJNA10729"
+prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
 
-// process fetch_reference {
+process fetch_reference {
 
-//     publishDir "${data}/reference/", mode: 'copy'
+    publishDir "${data}/reference/", mode: 'copy'
     
-//     output:
-//         file("geneset.gtf.gz") into geneset_gtf
-//         file("reference.fa.gz") into reference_hisat
+    output:
+        file("geneset.gtf.gz") into geneset_gtf
+        file("reference.fa.gz") into reference_hisat
 
-//     """
-//         echo '${release}'
-//         echo '${species}'
-//         echo '${prefix}'
-//         wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
-//         mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
-//         mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
+    """
+        echo '${release}'
+        echo '${species}'
+        echo '${prefix}'
+        wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
 
-//     """
-// }
-// geneset_gtf.into { geneset_hisat; geneset_stringtie }
+    """
+}
+geneset_gtf.into { geneset_hisat; geneset_stringtie }
 
 
 // ** - Create HiSat2 Index using reference genome and annotation file
 
-// extract_exons_py = file("auxillary/scripts/hisat2_extract_exons.py")
-// extract_splice_py = file("auxillary/scripts/hisat2_extract_splice_sites.py")
+// extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
+// extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 // process hisat2_indexing {
 
