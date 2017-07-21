@@ -16,6 +16,8 @@ sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 // ** - Covert SRA files to fastqs
 process sra_to_fastq {
 
+    cpus large_core
+
     publishDir "${data}/fq/", mode: 'copy'
     
     input:
