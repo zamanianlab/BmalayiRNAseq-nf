@@ -32,7 +32,7 @@ process sra_to_fastq {
 
     while read line     
     do           
-        fastq-dump --gzip --split-files ~/ncbi/sra/public/\$line.sra
+        fastq-dump --gzip --split-files ~/ncbi/public/sra/\$line.sra
     done <${sra_list} 
 
     """
