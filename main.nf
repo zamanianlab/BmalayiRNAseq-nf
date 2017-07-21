@@ -33,14 +33,14 @@ process sra_to_fastq {
 
     while read line     
     do           
-        parallel-fastq-dump --threads ${large_core} --gzip --split-files ~/ncbi/public/sra/\$line.sra
+        fastq-dump --gzip --split-files ~/ncbi/public/sra/\$line.sra
     done <${sra_list} 
 
     """
 
 }
 
-
+//parallel-fastq-dump --threads ${large_core} --gzip --split-files ~/ncbi/public/sra/\$line.sra
 
 // ** - Recurse through subdirectories to get all fastqs
 // fq_set = Channel.fromPath(data + "sra/*.fastq.gz")
