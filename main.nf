@@ -12,6 +12,34 @@ small_core=config.small_core
 // ** - Get txt file of SRA accession IDs from 'auxillary' folder
 sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 
+// ** - Covert SRA files to fastqs
+process sra_to_fastq {
+
+    cpus large_core
+
+    publishDir "${data}/fq/", mode: 'copy'
+    
+    input:
+        file("SRR_Acc_List.txt") from sra_file
+
+    output:
+        file("*")
+
+    script:
+
+    sra_list="SRR_Acc_List.txt"
+
+    """ 
+
+    while read line     
+    do           
+        parallel-fastq-dump --threads ${large_core} --gzip --split-files ~/ncbi/public/sra/\$line.sra
+    done <${sra_list} 
+
+    """
+
+}
+
 
 // ** - Covert SRA files to fastqs
 process sra_to_fastq {
