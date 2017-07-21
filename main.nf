@@ -34,7 +34,7 @@ process sra_to_fastq {
 
     while read line     
     do           
-        parallel-fastq-dump ~/ncbi/public/sra/\$line.sra --threads ${large_core} --gzip --split-files 
+        parallel-fastq-dump -s ~/ncbi/public/sra/\$line.sra --threads ${large_core} --gzip --split-files 
     done <${sra_list} 
 
     """
