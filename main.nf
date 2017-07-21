@@ -12,11 +12,17 @@ small_core=config.small_core
 // ** - Get txt file of SRA accession IDs from 'auxillary' folder
 sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 
-// ** - Download SRA files based on text file list of SRA accession IDs (goes to ncbi folder)
-process fetch_SRA {
+
+// ** - Covert SRA files to fastqs
+process sra_to_fastq {
+
+    publishDir "${data}/fq/", mode: 'copy'
     
     input:
         file("SRR_Acc_List.txt") from sra_file
+
+    output:
+        file("*")
 
     script:
 
@@ -26,8 +32,7 @@ process fetch_SRA {
 
     while read line     
     do           
-        echo \$line
-        prefetch \$line 
+        fastq-dump --gzip --split-files ~/NCBI/sra/public/\$line.sra
     done <${sra_list} 
 
     """
@@ -35,63 +40,36 @@ process fetch_SRA {
 }
 
 
-// ** - Covert SRA files to fastqs
-// process fetch_reads {
-
-//     publishDir "${data}/fq/", mode: 'copy'
-    
-//     input:
-//         file("SRR_Acc_List.txt") from sra_file
-
-//     output:
-//         file("*")
-
-//     script:
-
-//     sra_list="SRR_Acc_List.txt"
-
-//     """ 
-
-//     while read line     
-//     do           
-//         touch \$line.txt
-//     done <${sra_list} 
-
-//     """
-// //**  fastq-dump --gzip \$line  
-// }
-
-
 // ** - Recurse through subdirectories to get all fastqs
 // fq_set = Channel.fromPath(data + "sra/*.fastq.gz")
 //                 .map { n -> [ n.getName(), n ] }
 
 
-** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
-release="WBPS9"
-species="brugia_malayi"
-prjn="PRJNA10729"
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+// ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
+// release="WBPS9"
+// species="brugia_malayi"
+// prjn="PRJNA10729"
+// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
 
-process fetch_reference {
+// process fetch_reference {
 
-    publishDir "${data}/reference/", mode: 'copy'
+//     publishDir "${data}/reference/", mode: 'copy'
     
-    output:
-        file("geneset.gtf.gz") into geneset_gtf
-        file("reference.fa.gz") into reference_hisat
+//     output:
+//         file("geneset.gtf.gz") into geneset_gtf
+//         file("reference.fa.gz") into reference_hisat
 
-    """
-        echo '${release}'
-        echo '${species}'
-        echo '${prefix}'
-        wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
-        mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
-        mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
+//     """
+//         echo '${release}'
+//         echo '${species}'
+//         echo '${prefix}'
+//         wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
+//         mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
+//         mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
 
-    """
-}
-geneset_gtf.into { geneset_hisat; geneset_stringtie }
+//     """
+// }
+// geneset_gtf.into { geneset_hisat; geneset_stringtie }
 
 
 // ** - Create HiSat2 Index using reference genome and annotation file
@@ -133,6 +111,58 @@ geneset_gtf.into { geneset_hisat; geneset_stringtie }
 //         zcat reference.fa.gz > reference.fa
 //         hisat2-build -p ${small_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
 //     """
+
+// process trimmomatic {
+
+//     cpus small_core
+
+//     tag { name }
+
+//     input:
+//         set val(name), file(reads) from fq_set
+
+//     output:
+//         file(name_out) into trimmed_reads
+
+//     script:
+//     name_out = name.replace('.fastq.gz', '_trim.fq.gz')
+
+//     """
+//         trimmomatic SE -phred33 -threads ${small_core} ${reads} ${name_out} ILLUMINACLIP:TruSeq3-SE.fa:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:15 
+//     """
+// }
+
+
+// process align {
+
+//     cpus small_core
+
+//     tag { prefix }
+
+//     input:
+//         file reads from trimmed_reads
+//         file hs2_indices from hs2_indices.first()
+
+//     output:
+//         set val(sample_id), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
+//         file "${prefix}.hisat2_log.txt" into alignment_logs
+
+//     script:
+//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+//         prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
+//         m = prefix =~ /\w+-([^_]+)_.*/
+//         sample_id = m[0][1]
+
+//     """
+//         hisat2 -p ${small_core} -x $index_base -U ${reads} -S ${prefix}.sam --rg-id "${prefix}" --rg "SM:${sample_id}" --rg "LB:${sample_id}" --rg "PL:ILLUMINA" 2> ${prefix}.hisat2_log.txt
+//         samtools view -bS ${prefix}.sam > ${prefix}.unsorted.bam
+//         samtools flagstat ${prefix}.unsorted.bam
+//         samtools sort -@ ${small_core} -o ${prefix}.bam ${prefix}.unsorted.bam
+//         samtools index -b ${prefix}.bam
+//     """
+// }
+
+
 
 // }
 
