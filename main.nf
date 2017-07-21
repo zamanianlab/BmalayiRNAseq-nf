@@ -41,34 +41,6 @@ process sra_to_fastq {
 }
 
 
-// ** - Covert SRA files to fastqs
-process sra_to_fastq {
-
-    cpus large_core
-
-    publishDir "${data}/fq/", mode: 'copy'
-    
-    input:
-        file("SRR_Acc_List.txt") from sra_file
-
-    output:
-        file("*")
-
-    script:
-
-    sra_list="SRR_Acc_List.txt"
-
-    """ 
-
-    while read line     
-    do           
-        parallel-fastq-dump -s ~/ncbi/public/sra/\$line.sra --threads ${large_core} --gzip --split-files 
-    done <${sra_list} 
-
-    """
-
-}
-
 
 // ** - Recurse through subdirectories to get all fastqs
 // fq_set = Channel.fromPath(data + "sra/*.fastq.gz")
