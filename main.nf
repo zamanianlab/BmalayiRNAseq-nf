@@ -25,6 +25,8 @@ process trim {
 
     cpus large_core
 
+    tag { fq_id }
+
     publishDir "${data}/fq_trim/", mode: 'move'
 
     input:
@@ -32,9 +34,10 @@ process trim {
 
     output:
         set file("${fq_id}_1P.fq.gz"), file("${fq_id}_2P.fq.gz") into trim_output
+        file "${fq_id}.trim_log.txt" into trim_logs
 
     """
-    trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45
+    trimmomatic PE -threads ${large_core} -trimlog ${fq_id}.trim_log.txt $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45
     rm ${fq_id}_1U.fq.gz
     rm ${fq_id}_2U.fq.gz
     """
