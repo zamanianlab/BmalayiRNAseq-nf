@@ -18,7 +18,7 @@ sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 //                 .map { n -> [ n.getName(), n ] }
 
 // Fetch fqs; alternative suffixes
-Channel.fromFilePairs('${data}/fq/SRR19012*_{1,2}.fastq.gz', flat: true)
+Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
         .into { trimmomatic_read_pairs ; log_fq }
 
 process trim {
