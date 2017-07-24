@@ -12,39 +12,34 @@ small_core=config.small_core
 // ** - Get txt file of SRA accession IDs from 'auxillary' folder
 sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 
-// ** - Covert SRA files to fastqs
-process sra_to_fastq {
+
+// ** - Recurse through subdirectories to get all fastqs
+// fq_set = Channel.fromPath(data + "fq/*.fastq.gz")
+//                 .map { n -> [ n.getName(), n ] }
+
+// Fetch fqs; alternative suffixes
+Channel.fromFilePairs(data + 'fq/*_{1,2}.fastq.gz', flat: true)
+        .into { trimmomatic_read_pairs }
+
+process trim {
 
     cpus large_core
 
-    publishDir "${data}/fq/", mode: 'copy'
-    
+    publishDir "${data}/fq_trim/", mode: 'move'
+
     input:
-        file("SRR_Acc_List.txt") from sra_file
+        set fq_id, file(forward), file(reverse) from trimmomatic_read_pairs
 
     output:
-        file("*")
+        set file("${fq_id}_1P.fq.gz"), file("${fq_id}_2P.fq.gz") into trim_output
 
-    script:
-
-    sra_list="SRR_Acc_List.txt"
-
-    """ 
-
-    while read line     
-    do           
-        fastq-dump --gzip --split-files ~/ncbi/public/sra/\$line.sra
-    done <${sra_list} 
-
+    """
+    trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45
+    rm ${fq_id}_1U.fq.gz
+    rm ${fq_id}_2U.fq.gz
     """
 
 }
-
-//parallel-fastq-dump --threads ${large_core} --gzip --split-files ~/ncbi/public/sra/\$line.sra
-
-// ** - Recurse through subdirectories to get all fastqs
-// fq_set = Channel.fromPath(data + "sra/*.fastq.gz")
-//                 .map { n -> [ n.getName(), n ] }
 
 
 // ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
