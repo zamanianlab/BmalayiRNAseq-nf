@@ -35,7 +35,7 @@ process trim {
         file "${fq_id}.trim_log.txt" into trim_logs
 
     """
-    trimmomatic PE -threads ${large_core} -trimlog ${fq_id}.trim_log.txt $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45
+    trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45 > ${fq_id}.trim_log.txt
     rm ${fq_id}_1U.fq.gz
     rm ${fq_id}_2U.fq.gz
     """
