@@ -23,8 +23,6 @@ Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
 
 process trim {
 
-    cpus large_core
-
     tag { fq_id }
 
     publishDir "${data}/fq_trim/", mode: 'move'
