@@ -91,13 +91,12 @@ geneset_gtf.into { geneset_hisat; geneset_stringtie }
 
 
 // ** - Create HiSat2 Index using reference genome and annotation file
-
 extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
 extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process hisat2_indexing {
 
-//    publishDir "${data}/reference/", mode: 'move'
+   publishDir "${data}/reference/", mode: 'copy'
 
     input:
         file("geneset.gtf.gz") from geneset_hisat
@@ -115,26 +114,26 @@ process hisat2_indexing {
 
 }
 
-// process build_hisat_index {
+process build_hisat_index {
 
-//     publishDir "${data}/reference/", mode: 'move'
+    publishDir "${data}/reference/", mode: 'copy'
 
-//     cpus large_core
+    cpus large_core
 
-//     input:
-//         file("splice.ss") from splice_hisat
-//         file("exon.exon") from exon_hisat
-//         file("reference.fa.gz") from reference_build_hisat
+    input:
+        file("splice.ss") from splice_hisat
+        file("exon.exon") from exon_hisat
+        file("reference.fa.gz") from reference_build_hisat
 
-//     output:
-//         file "*.ht2" into hs2_indices
+    output:
+        file "*.ht2" into hs2_indices
 
-//     """
-//         zcat reference.fa.gz > reference.fa
-//         hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-//     """
+    """
+        zcat reference.fa.gz > reference.fa
+        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+    """
 
-// }
+}
 
 
 // process align {
