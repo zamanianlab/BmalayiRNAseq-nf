@@ -149,7 +149,7 @@ process align {
 
     output:
         set val(srid), file("${srid}.bam"), file("${srid}.bam.bai") into hisat2_bams
-        file "${prefix}.hisat2_log.txt" into alignment_logs
+        file "${srid}.hisat2_log.txt" into alignment_logs
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
