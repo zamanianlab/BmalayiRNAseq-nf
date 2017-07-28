@@ -19,96 +19,30 @@ sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 
 // Fetch fqs; alternative suffixes
 Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
-        .into { trimmomatic_read_pairs ; log_fq }
+        .into { read_pairs }
 
-process trim {
+// SKIP TRIMMING (READS ARE ALREADY TRIMMED)
+// process trim {
 
-    tag { fq_id }
+//     tag { fq_id }
 
-    publishDir "${data}/fq_trim/", mode: 'move'
-
-    input:
-        set fq_id, file(forward), file(reverse) from trimmomatic_read_pairs
-
-    output:
-        set file("${fq_id}_1P.fq.gz"), file("${fq_id}_2P.fq.gz") into trim_output
-        file "${fq_id}.trim_log.txt" into trim_logs
-
-    """
-    trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:45 > ${fq_id}.trim_log.txt
-    rm ${fq_id}_1U.fq.gz
-    rm ${fq_id}_2U.fq.gz
-    """
-
-}
-
-
-// ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
-// release="WBPS9"
-// species="brugia_malayi"
-// prjn="PRJNA10729"
-// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
-
-// process fetch_reference {
-
-//     publishDir "${data}/reference/", mode: 'copy'
-    
-//     output:
-//         file("geneset.gtf.gz") into geneset_gtf
-//         file("reference.fa.gz") into reference_hisat
-
-//     """
-//         echo '${release}'
-//         echo '${species}'
-//         echo '${prefix}'
-//         wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
-//         mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
-//         mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
-
-//     """
-// }
-// geneset_gtf.into { geneset_hisat; geneset_stringtie }
-
-
-// ** - Create HiSat2 Index using reference genome and annotation file
-
-// extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
-// extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
-
-// process hisat2_indexing {
+//     publishDir "${data}/fq_trim/", mode: 'move'
 
 //     input:
-//         file("geneset.gtf.gz") from geneset_hisat
-//         file("reference.fa.gz") from reference_hisat
+//         set fq_id, file(forward), file(reverse) from read_pairs
 
 //     output:
-//         file("splice.ss") into splice_hisat
-//         file("exon.exon") into exon_hisat
-//         file("reference.fa.gz") into reference_build_hisat
+//         set file("${fq_id}_1P.fq.gz"), file("${fq_id}_2P.fq.gz") into trim_output
+//         //file "${fq_id}.trim_log.txt" into trim_logs
 
 //     """
-//         zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
-//         zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
+//     trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${fq_id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:75 
+//     rm ${fq_id}_1U.fq.gz
+//     rm ${fq_id}_2U.fq.gz
 //     """
 
 // }
 
-// process build_hisat_index {
-
-//     cpus small_core
-
-//     input:
-//         file("splice.ss") from splice_hisat
-//         file("exon.exon") from exon_hisat
-//         file("reference.fa.gz") from reference_build_hisat
-
-//     output:
-//         file "*.ht2" into hs2_indices
-
-//     """
-//         zcat reference.fa.gz > reference.fa
-//         hisat2-build -p ${small_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-//     """
 
 // process trimmomatic {
 
@@ -131,14 +65,86 @@ process trim {
 // }
 
 
+// ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
+release="WBPS9"
+species="brugia_malayi"
+prjn="PRJNA10729"
+prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+
+process fetch_reference {
+
+    publishDir "${data}/reference/", mode: 'move'
+    
+    output:
+        file("geneset.gtf.gz") into geneset_gtf
+        file("reference.fa.gz") into reference_hisat
+
+    """
+        echo '${release}'
+        echo '${species}'
+        echo '${prefix}'
+        wget -nc -r -nH --cut-dirs=7 --no-parent --reject="index.html*" -A 'canonical_geneset.gtf.gz','genomic.fa.gz' $prefix
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz' geneset.gtf.gz
+        mv '${species}/${prjn}/${species}.${prjn}.${release}.genomic.fa.gz' reference.fa.gz
+
+    """
+}
+geneset_gtf.into { geneset_hisat; geneset_stringtie }
+
+
+// ** - Create HiSat2 Index using reference genome and annotation file
+
+extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
+extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
+
+process hisat2_indexing {
+
+    input:
+        file("geneset.gtf.gz") from geneset_hisat
+        file("reference.fa.gz") from reference_hisat
+
+    output:
+        file("splice.ss") into splice_hisat
+        file("exon.exon") into exon_hisat
+        file("reference.fa.gz") into reference_build_hisat
+
+    """
+        zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
+        zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
+    """
+
+}
+
+process build_hisat_index {
+
+    cpus large_core
+
+    input:
+        file("splice.ss") from splice_hisat
+        file("exon.exon") from exon_hisat
+        file("reference.fa.gz") from reference_build_hisat
+
+    output:
+        file "*.ht2" into hs2_indices
+
+    """
+        zcat reference.fa.gz > reference.fa
+        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+    """
+
+}
+
+
 // process align {
 
-//     cpus small_core
+//     cpus large_core
 
 //     tag { prefix }
 
 //     input:
-//         file reads from trimmed_reads
+//         //set val(name), file(reads) from fq_set
+//         // file reads from trimmed_reads
+//         set val(fq_id), file(forward), file(reverse) from read_pairs
 //         file hs2_indices from hs2_indices.first()
 
 //     output:
@@ -147,7 +153,8 @@ process trim {
 
 //     script:
 //         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-//         prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
+//         // prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
+//         prefix = reads[0].toString() - ~/(_{1,2}\.fastq\.gz)$/
 //         m = prefix =~ /\w+-([^_]+)_.*/
 //         sample_id = m[0][1]
 
@@ -157,43 +164,16 @@ process trim {
 //         samtools flagstat ${prefix}.unsorted.bam
 //         samtools sort -@ ${small_core} -o ${prefix}.bam ${prefix}.unsorted.bam
 //         samtools index -b ${prefix}.bam
-//     """
-// }
-
-
-
-// }
-
-// process align {
-
-//     cpus large_core
-
-//     publishDir "${output}/bam", mode: 'copy'
-
-//     tag { reads }
-
-//     input:
-//         set val(name), file(reads) from fq_set
-//         file hs2_indices from hs2_indices.first()
-
-//     output:
-//         set val("${prefix}"), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
-//         file "${prefix}.hisat2_log.txt" into alignment_logs
-
-//     script:
-//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-//         prefix = reads[0].toString() - ~/(\.fastq\.gz)$/
-
-//     """ 
-//         hisat2 -p ${large_core} -x $index_base -U ${reads} -S ${prefix}.sam 2> ${prefix}.hisat2_log.txt
-//         samtools view -bS ${prefix}.sam > ${prefix}.unsorted.bam
-//         samtools flagstat ${prefix}.unsorted.bam
-//         samtools sort -@ ${small_core} -o ${prefix}.bam ${prefix}.unsorted.bam
-//         samtools index -b ${prefix}.bam
 //         rm *sam
 //         rm *unsorted.bam
 //     """
 // }
+
+
+
+// }
+
+
 
 
 // process stringtie_counts {
