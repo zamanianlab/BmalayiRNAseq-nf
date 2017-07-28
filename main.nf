@@ -148,7 +148,7 @@ process align {
         file hs2_indices from hs2_indices.first()
 
     output:
-        set val(srid), val(sample_id), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
+        set val(srid), file("${srid}.bam"), file("${srid}.bam.bai") into hisat2_bams
         file "${prefix}.hisat2_log.txt" into alignment_logs
 
     script:
