@@ -73,7 +73,7 @@ prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/
 
 process fetch_reference {
 
-    publishDir "${data}/reference/", mode: 'cp'
+    publishDir "${data}/reference/", mode: 'mv'
     
     output:
         file("geneset.gtf.gz") into geneset_gtf
@@ -85,51 +85,52 @@ process fetch_reference {
         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
 
     """
+
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
 
 
 // ** - Create HiSat2 Index using reference genome and annotation file
 
-// extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
-// extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
+extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
+extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
-// process hisat2_indexing {
+process hisat2_indexing {
 
-//     input:
-//         file("geneset.gtf.gz") from geneset_hisat
-//         file("reference.fa.gz") from reference_hisat
+    input:
+        file("geneset.gtf.gz") from geneset_hisat
+        file("reference.fa.gz") from reference_hisat
 
-//     output:
-//         file("splice.ss") into splice_hisat
-//         file("exon.exon") into exon_hisat
-//         file("reference.fa.gz") into reference_build_hisat
+    output:
+        file("splice.ss") into splice_hisat
+        file("exon.exon") into exon_hisat
+        file("reference.fa.gz") into reference_build_hisat
 
-//     """
-//         zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
-//         zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
-//     """
+    """
+        zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
+        zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
+    """
 
-// }
+}
 
-// process build_hisat_index {
+process build_hisat_index {
 
-//     cpus large_core
+    cpus large_core
 
-//     input:
-//         file("splice.ss") from splice_hisat
-//         file("exon.exon") from exon_hisat
-//         file("reference.fa.gz") from reference_build_hisat
+    input:
+        file("splice.ss") from splice_hisat
+        file("exon.exon") from exon_hisat
+        file("reference.fa.gz") from reference_build_hisat
 
-//     output:
-//         file "*.ht2" into hs2_indices
+    output:
+        file "*.ht2" into hs2_indices
 
-//     """
-//         zcat reference.fa.gz > reference.fa
-//         hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-//     """
+    """
+        zcat reference.fa.gz > reference.fa
+        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+    """
 
-// }
+}
 
 
 // process align {
