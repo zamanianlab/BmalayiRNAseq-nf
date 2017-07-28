@@ -136,40 +136,44 @@ process build_hisat_index {
 }
 
 
-// process align {
+// ** - ALIGNMENT
 
-//     cpus large_core
+// load text file matching SRID with SampleID (form: sample_rep)
+sample_match = file("${aux}/SRA_SampleIDs.txt")
 
-//     tag { prefix }
+process align {
 
-//     input:
-//         //set val(name), file(reads) from fq_set
-//         // file reads from trimmed_reads
-//         set val(fq_id), file(forward), file(reverse) from read_pairs
-//         file hs2_indices from hs2_indices.first()
+    cpus large_core
 
-//     output:
-//         set val(sample_id), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
-//         file "${prefix}.hisat2_log.txt" into alignment_logs
+    tag { fq_id }
 
-//     script:
-//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-//         // prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
-//         prefix = reads[0].toString() - ~/(_{1,2}\.fastq\.gz)$/
-//         m = prefix =~ /\w+-([^_]+)_.*/
-//         sample_id = m[0][1]
+    input:
+        set val(fq_id), file(forward), file(reverse) from read_pairs
+        file hs2_indices from hs2_indices.first()
 
-//     """
-//         hisat2 -p ${small_core} -x $index_base -U ${reads} -S ${prefix}.sam --rg-id "${prefix}" --rg "SM:${sample_id}" --rg "LB:${sample_id}" --rg "PL:ILLUMINA" 2> ${prefix}.hisat2_log.txt
-//         samtools view -bS ${prefix}.sam > ${prefix}.unsorted.bam
-//         samtools flagstat ${prefix}.unsorted.bam
-//         samtools sort -@ ${small_core} -o ${prefix}.bam ${prefix}.unsorted.bam
-//         samtools index -b ${prefix}.bam
-//         rm *sam
-//         rm *unsorted.bam
-//     """
-// }
+    output:
+        val(sample_id) into sample_ids
+        // set val(fq_id), val(sample_id), file("${prefix}.bam"), file("${prefix}.bam.bai") into hisat2_bams
+        // file "${prefix}.hisat2_log.txt" into alignment_logs
 
+    script:
+        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+
+    """
+        sample_id=\$(grep ${fq_id} ${sample_match}) 
+        echo \${sample_id}
+        echo ${sample_id}
+
+    """
+}
+
+        // hisat2 -p ${small_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${fq_id}.sam --rg-id "${fq_id}" --rg "SM:${sample_id}" --rg "PL:ILLUMINA" 2> ${fq_id}.hisat2_log.txt
+        // samtools view -bS ${fq_id}.sam > ${fq_id}.unsorted.bam
+        // samtools flagstat ${fq_id}.unsorted.bam
+        // samtools sort -@ ${small_core} -o ${fq_id}.bam ${fq_id}.unsorted.bam
+        // samtools index -b ${fq_id}.bam
+        // rm *sam
+        // rm *unsorted.bam
 
 
 // }
