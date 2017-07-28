@@ -73,7 +73,7 @@ prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/
 
 process fetch_reference {
 
-    publishDir "${data}/reference/", mode: 'move'
+    publishDir "${data}/reference/", mode: 'copy'
     
     output:
         file("geneset.gtf.gz") into geneset_gtf
