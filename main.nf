@@ -139,7 +139,7 @@ process build_hisat_index {
 // ** - ALIGNMENT AND STRINGTIE (combined)
 process align_stringtie {
 
-    publishDir "output/expression", mode: 'copy'
+    publishDir "${output}/expression", mode: 'copy'
 
     cpus small_core
 
@@ -147,12 +147,12 @@ process align_stringtie {
 
     input:
         set val(srid), file(forward), file(reverse) from read_pairs
-        file hs2_indices from hs2_indices.first()
         file("geneset.gtf.gz") from geneset_stringtie
+        file hs2_indices from hs2_indices.first()
 
     output:
         file "${srid}.hisat2_log.txt" into alignment_logs
-        set file("${srid}_expressed.gtf"), file("${srid}_abund.tab") into stringtie_exp
+        file("${srid}/*") into stringtie_exp
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
@@ -163,10 +163,9 @@ process align_stringtie {
         samtools flagstat ${srid}.unsorted.bam
         samtools sort -@ ${small_core} -o ${srid}.bam ${srid}.unsorted.bam
         samtools index -b ${srid}.bam
-        rm *sam
-        rm *unsorted.bam
         zcat geneset.gtf.gz > geneset.gtf
-        stringtie -p ${small_core} -G geneset.gtf -A ${srid}_abund.tab -e -B -o ${srid}_expressed.gtf ${srid}.bam
+        stringtie ${srid}.bam -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf 
+        rm *sam
         rm *bam
         rm *bam.bai
     """
