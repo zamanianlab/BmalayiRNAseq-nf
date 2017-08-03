@@ -148,7 +148,7 @@ process align_stringtie {
     input:
         set val(srid), file(forward), file(reverse) from read_pairs
         file hs2_indices from hs2_indices.first()
-        file("geneset.gtf.gz") from geneset_stringtie.first()
+        file("geneset.gtf.gz") from geneset_stringtie
 
     output:
         file "${srid}.hisat2_log.txt" into alignment_logs
