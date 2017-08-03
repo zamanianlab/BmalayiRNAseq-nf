@@ -136,8 +136,10 @@ process build_hisat_index {
 }
 
 
-// ** - ALIGNMENT
+// ** - ALIGNMENT AND STRINGTIE (combined)
 process align {
+
+    publishDir "output/expression", mode: 'copy'
 
     cpus small_core
 
@@ -146,10 +148,11 @@ process align {
     input:
         set val(srid), file(forward), file(reverse) from read_pairs
         file hs2_indices from hs2_indices.first()
+        file("geneset.gtf.gz") from geneset_stringtie.first()
 
     output:
-        set val(srid), file("${srid}.bam"), file("${srid}.bam.bai") into hisat2_bams
         file "${srid}.hisat2_log.txt" into alignment_logs
+        file("${srid}_*") into stringtie_exp
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
@@ -162,9 +165,66 @@ process align {
         samtools index -b ${srid}.bam
         rm *sam
         rm *unsorted.bam
-
+        zcat geneset.gtf.gz > geneset.gtf
+        stringtie -p ${small_core} -G geneset.gtf -A ${srid}_abund.tab -e -B -o ${srid}_expressed.gtf ${srid}.bam
+        rm *bam
     """
 }
+
+
+
+// process stringtie_counts {
+
+//     publishDir "output/expression", mode: 'copy'
+
+//     cpus small_core
+
+//     tag { srid }
+
+//     input:
+//         set val(srid), file(bam), file(bai) from hisat2_bams
+//         file("geneset.gtf.gz") from geneset_stringtie.first()
+
+//     output:
+//         file("${srid}/*") into stringtie_exp
+
+//     """ 
+//         zcat geneset.gtf.gz > geneset.gtf
+//         stringtie -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf ${bam}
+//     """
+// }
+
+
+
+// // ** - ALIGNMENT
+// process align {
+
+//     cpus small_core
+
+//     tag { srid }
+
+//     input:
+//         set val(srid), file(forward), file(reverse) from read_pairs
+//         file hs2_indices from hs2_indices.first()
+
+//     output:
+//         set val(srid), file("${srid}.bam"), file("${srid}.bam.bai") into hisat2_bams
+//         file "${srid}.hisat2_log.txt" into alignment_logs
+
+//     script:
+//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+
+//     """
+//         hisat2 -p ${small_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${srid}.sam --rg-id "${srid}" --rg "SM:${srid}" --rg "PL:ILLUMINA" 2> ${srid}.hisat2_log.txt
+//         samtools view -bS ${srid}.sam > ${srid}.unsorted.bam
+//         samtools flagstat ${srid}.unsorted.bam
+//         samtools sort -@ ${small_core} -o ${srid}.bam ${srid}.unsorted.bam
+//         samtools index -b ${srid}.bam
+//         rm *sam
+//         rm *unsorted.bam
+
+//     """
+// }
 
 
 

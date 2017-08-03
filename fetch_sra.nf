@@ -61,3 +61,5 @@ process sra_to_fastq {
     """
 
 }
+
+// Can remove the sra files from NCBI folder when finished
