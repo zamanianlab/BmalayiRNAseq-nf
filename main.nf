@@ -137,7 +137,7 @@ process build_hisat_index {
 
 
 // ** - ALIGNMENT AND STRINGTIE (combined)
-process align {
+process align_stringtie {
 
     publishDir "output/expression", mode: 'copy'
 
@@ -168,9 +168,9 @@ process align {
         zcat geneset.gtf.gz > geneset.gtf
         stringtie -p ${small_core} -G geneset.gtf -A ${srid}_abund.tab -e -B -o ${srid}_expressed.gtf ${srid}.bam
         rm *bam
+        rm *bam.bai
     """
 }
-
 
 
 // process stringtie_counts {
