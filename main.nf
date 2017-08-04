@@ -141,7 +141,7 @@ process align_stringtie {
 
     publishDir "${output}/expression", mode: 'copy'
 
-    cpus small_core
+    cpus large_core
 
     tag { srid }
 
@@ -158,18 +158,56 @@ process align_stringtie {
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
 
     """
-        hisat2 -p ${small_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${srid}.sam --rg-id "${srid}" --rg "SM:${srid}" --rg "PL:ILLUMINA" 2> ${srid}.hisat2_log.txt
+        hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${srid}.sam --rg-id "${srid}" --rg "SM:${srid}" --rg "PL:ILLUMINA" 2> ${srid}.hisat2_log.txt
         samtools view -bS ${srid}.sam > ${srid}.unsorted.bam
+        rm *.sam
         samtools flagstat ${srid}.unsorted.bam
-        samtools sort -@ ${small_core} -o ${srid}.bam ${srid}.unsorted.bam
+        samtools sort -@ ${large_core} -o ${srid}.bam ${srid}.unsorted.bam
+        rm *.unsorted.bam
         samtools index -b ${srid}.bam
         zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${srid}.bam -p ${small_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf 
-        rm *sam
-        rm *bam
-        rm *bam.bai
+        stringtie ${srid}.bam -p ${large_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf 
+        rm *.bam
+        rm *.bam.bai
+        rm *.gtf
     """
 }
+
+
+// prepDE = file("auxillary/scripts/prepDE.py")
+
+// process stringtie_table_counts {
+
+//     echo true
+
+//     publishDir "output/diffexp", mode: 'copy'
+
+//     cpus small_core
+
+//     input:
+//         val(sample_file) from stringtie_exp.toSortedList()
+
+//     output:
+//         file ("gene_count_matrix.csv") into gene_count_matrix
+//         file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+//     """
+//         for i in ${sample_file.flatten().join(" ")}; do
+//             bn=`basename \${i}`
+//             full_path=`dirname \${i}`
+//             sample_name=\${full_path##*/}
+//             echo "\${sample_name} \${i}"
+//             mkdir -p expression/\${sample_name}
+//             ln -s \${i} expression/\${sample_name}/\${bn}
+//         done;
+//         python ${prepDE} -i expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+//     """
+// }
+
+
+
+
 
 // process stringtie_counts {
 
