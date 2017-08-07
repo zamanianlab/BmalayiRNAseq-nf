@@ -9,17 +9,151 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// ** - Get txt file of SRA accession IDs from 'auxillary' folder
-sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
+// // ** - Get txt file of SRA accession IDs from 'auxillary' folder
+// sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
 
+
+// // Fetch fqs; alternative suffixes
+// Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
+//         .into { read_pairs }
+
+
+// // ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
+// release="WBPS9"
+// species="brugia_malayi"
+// prjn="PRJNA10729"
+// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+
+// process fetch_reference {
+
+//     publishDir "${data}/reference/", mode: 'copy'
+    
+//     output:
+//         file("geneset.gtf.gz") into geneset_gtf
+//         file("reference.fa.gz") into reference_hisat
+
+//     """
+//         echo '${prefix}'
+//         curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+//         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
+
+//     """
+
+// }
+// geneset_gtf.into { geneset_hisat; geneset_stringtie }
+
+
+// // ** - Create HiSat2 Index using reference genome and annotation file
+// extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
+// extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
+
+// process hisat2_indexing {
+
+//    publishDir "${data}/reference/", mode: 'copy'
+
+//     input:
+//         file("geneset.gtf.gz") from geneset_hisat
+//         file("reference.fa.gz") from reference_hisat
+
+//     output:
+//         file("splice.ss") into splice_hisat
+//         file("exon.exon") into exon_hisat
+//         file("reference.fa.gz") into reference_build_hisat
+
+//     """
+//         zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
+//         zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
+//     """
+
+// }
+
+// process build_hisat_index {
+
+//     publishDir "${data}/reference/", mode: 'copy'
+
+//     cpus large_core
+
+//     input:
+//         file("splice.ss") from splice_hisat
+//         file("exon.exon") from exon_hisat
+//         file("reference.fa.gz") from reference_build_hisat
+
+//     output:
+//         file "*.ht2" into hs2_indices
+
+//     """
+//         zcat reference.fa.gz > reference.fa
+//         hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+//     """
+
+// }
+
+
+// // ** - ALIGNMENT AND STRINGTIE (combined)
+// process align_stringtie {
+
+//     publishDir "${output}/expression", mode: 'copy'
+
+//     cpus large_core
+
+//     tag { srid }
+
+//     input:
+//         set val(srid), file(forward), file(reverse) from read_pairs
+//         file("geneset.gtf.gz") from geneset_stringtie
+//         file hs2_indices from hs2_indices.first()
+
+//     output:
+//         file "${srid}.hisat2_log.txt" into alignment_logs
+//         file("${srid}/*") into stringtie_exp
+
+//     script:
+//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+
+//     """
+//         hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${srid}.sam --rg-id "${srid}" --rg "SM:${srid}" --rg "PL:ILLUMINA" 2> ${srid}.hisat2_log.txt
+//         samtools view -bS ${srid}.sam > ${srid}.unsorted.bam
+//         rm *.sam
+//         samtools flagstat ${srid}.unsorted.bam
+//         samtools sort -@ ${large_core} -o ${srid}.bam ${srid}.unsorted.bam
+//         rm *.unsorted.bam
+//         samtools index -b ${srid}.bam
+//         zcat geneset.gtf.gz > geneset.gtf
+//         stringtie ${srid}.bam -p ${large_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf 
+//         rm *.bam
+//         rm *.bam.bai
+//         rm *.gtf
+//     """
+// }
+
+prepDE = file("${aux}/scripts/prepDE.py")
+
+process stringtie_table_counts {
+
+    echo true
+
+    publishDir "output/diffexp", mode: 'copy'
+
+    cpus small_core
+
+    output:
+        file ("gene_count_matrix.csv") into gene_count_matrix
+        file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+        python ${prepDE} -i ${output}/expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
+
+
+
+
+// // // // // // // // // // // // // // // // // IGNORE BELOW
 
 // ** - Recurse through subdirectories to get all fastqs
 // fq_set = Channel.fromPath(data + "fq/*.fastq.gz")
 //                 .map { n -> [ n.getName(), n ] }
-
-// Fetch fqs; alternative suffixes
-Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
-        .into { read_pairs }
 
 // SKIP TRIMMING (READS ARE ALREADY TRIMMED)
 // process trim {
@@ -65,145 +199,6 @@ Channel.fromFilePairs(data +'fq/*_{1,2}.fastq.gz', flat: true)
 // }
 
 
-// ** - Fetch reference genome (fa.gz) and gene annotation file (gtf.gz)
-release="WBPS9"
-species="brugia_malayi"
-prjn="PRJNA10729"
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
-
-process fetch_reference {
-
-    publishDir "${data}/reference/", mode: 'copy'
-    
-    output:
-        file("geneset.gtf.gz") into geneset_gtf
-        file("reference.fa.gz") into reference_hisat
-
-    """
-        echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
-        curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
-
-    """
-
-}
-geneset_gtf.into { geneset_hisat; geneset_stringtie }
-
-
-// ** - Create HiSat2 Index using reference genome and annotation file
-extract_exons_py = file("${aux}/scripts/hisat2_extract_exons.py")
-extract_splice_py = file("${aux}/scripts/hisat2_extract_splice_sites.py")
-
-process hisat2_indexing {
-
-   publishDir "${data}/reference/", mode: 'copy'
-
-    input:
-        file("geneset.gtf.gz") from geneset_hisat
-        file("reference.fa.gz") from reference_hisat
-
-    output:
-        file("splice.ss") into splice_hisat
-        file("exon.exon") into exon_hisat
-        file("reference.fa.gz") into reference_build_hisat
-
-    """
-        zcat geneset.gtf.gz | python ${extract_splice_py} - > splice.ss
-        zcat geneset.gtf.gz | python ${extract_exons_py} - > exon.exon
-    """
-
-}
-
-process build_hisat_index {
-
-    publishDir "${data}/reference/", mode: 'copy'
-
-    cpus large_core
-
-    input:
-        file("splice.ss") from splice_hisat
-        file("exon.exon") from exon_hisat
-        file("reference.fa.gz") from reference_build_hisat
-
-    output:
-        file "*.ht2" into hs2_indices
-
-    """
-        zcat reference.fa.gz > reference.fa
-        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-    """
-
-}
-
-
-// ** - ALIGNMENT AND STRINGTIE (combined)
-process align_stringtie {
-
-    publishDir "${output}/expression", mode: 'copy'
-
-    cpus large_core
-
-    tag { srid }
-
-    input:
-        set val(srid), file(forward), file(reverse) from read_pairs
-        file("geneset.gtf.gz") from geneset_stringtie
-        file hs2_indices from hs2_indices.first()
-
-    output:
-        file "${srid}.hisat2_log.txt" into alignment_logs
-        file("${srid}/*") into stringtie_exp
-
-    script:
-        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-
-    """
-        hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${srid}.sam --rg-id "${srid}" --rg "SM:${srid}" --rg "PL:ILLUMINA" 2> ${srid}.hisat2_log.txt
-        samtools view -bS ${srid}.sam > ${srid}.unsorted.bam
-        rm *.sam
-        samtools flagstat ${srid}.unsorted.bam
-        samtools sort -@ ${large_core} -o ${srid}.bam ${srid}.unsorted.bam
-        rm *.unsorted.bam
-        samtools index -b ${srid}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${srid}.bam -p ${large_core} -G geneset.gtf -A ${srid}/${srid}_abund.tab -e -B -o ${srid}/${srid}_expressed.gtf 
-        rm *.bam
-        rm *.bam.bai
-        rm *.gtf
-    """
-}
-
-
-// prepDE = file("auxillary/scripts/prepDE.py")
-
-// process stringtie_table_counts {
-
-//     echo true
-
-//     publishDir "output/diffexp", mode: 'copy'
-
-//     cpus small_core
-
-//     input:
-//         val(sample_file) from stringtie_exp.toSortedList()
-
-//     output:
-//         file ("gene_count_matrix.csv") into gene_count_matrix
-//         file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-//     """
-//         for i in ${sample_file.flatten().join(" ")}; do
-//             bn=`basename \${i}`
-//             full_path=`dirname \${i}`
-//             sample_name=\${full_path##*/}
-//             echo "\${sample_name} \${i}"
-//             mkdir -p expression/\${sample_name}
-//             ln -s \${i} expression/\${sample_name}/\${bn}
-//         done;
-//         python ${prepDE} -i expression -l 50 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-//     """
-// }
 
 
 
