@@ -132,7 +132,7 @@ process stringtie_table_counts {
 
     echo true
 
-    publishDir "output/diffexp", mode: 'copy'
+    publishDir "${output}/diffexp", mode: 'copy'
 
     cpus small_core
 
