@@ -19,7 +19,7 @@ process fetch_SRA {
     cpus small_core
 
     input:
-        file("SRR_Acc_List.txt") from sra_file_fetch
+        file("SRR_Acc_List_UGA.txt") from sra_file_fetch
 
     script:
 
