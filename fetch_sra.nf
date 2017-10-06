@@ -36,32 +36,32 @@ process fetch_SRA {
     """
 }
 
-// ** - Covert SRA files to fastqs
-process sra_to_fastq {
+// ** - Covert SRA files to fastqs (comment out until fetch_SRA{} complete)
+// process sra_to_fastq {
 
-    cpus small_core
+//     cpus small_core
 
-    publishDir "${data}/fq/", mode: 'move'
+//     publishDir "${data}/fq/", mode: 'move'
     
-    input:
-        file("SRR_Acc_List_UGA.txt") from sra_file_convert
+//     input:
+//         file("SRR_Acc_List_UGA.txt") from sra_file_convert
 
-    output:
-        file("*")
+//     output:
+//         file("*")
 
-    script:
+//     script:
 
-    sra_list="SRR_Acc_List_UGA.txt"
+//     sra_list="SRR_Acc_List_UGA.txt"
 
-    """ 
+//     """ 
 
-    while read line     
-    do           
-        fastq-dump --gzip --split-files ~/ncbi/public/sra/\$line.sra
-    done <${sra_list} 
+//     while read line     
+//     do           
+//         fastq-dump --gzip --split-files ~/ncbi/public/sra/\$line.sra
+//     done <${sra_list} 
 
-    """
+//     """
 
-}
+// }
 
 // Can remove the sra files from NCBI folder when finished
