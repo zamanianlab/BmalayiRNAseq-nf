@@ -10,7 +10,7 @@ large_core=config.large_core
 small_core=config.small_core
 
 // ** - Get txt file of SRA accession IDs from 'auxillary' folder
-sra_file = Channel.fromPath(aux + "SRR_Acc_List.txt")
+sra_file = Channel.fromPath(aux + "SRR_Acc_List_UGA.txt")
 sra_file.into { sra_file_fetch; sra_file_convert }
 
 // ** - Download SRA files based on text file list of SRA accession IDs (goes to ncbi folder)
@@ -21,7 +21,7 @@ process fetch_SRA {
 
     script:
 
-    sra_list="SRR_Acc_List.txt"
+    sra_list="SRR_Acc_List_UGA.txt"
 
     """ 
 
@@ -42,14 +42,14 @@ process sra_to_fastq {
     publishDir "${data}/fq/", mode: 'move'
     
     input:
-        file("SRR_Acc_List.txt") from sra_file_convert
+        file("SRR_Acc_List_UGA.txt") from sra_file_convert
 
     output:
         file("*")
 
     script:
 
-    sra_list="SRR_Acc_List.txt"
+    sra_list="SRR_Acc_List_UGA.txt"
 
     """ 
 
