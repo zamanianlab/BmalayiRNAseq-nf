@@ -138,6 +138,8 @@ process hisat2_stringtie {
     output:
         file "${id}.hisat2_log.txt" into alignment_logs
         file("${id}/*") into stringtie_exp
+        file("${id}.bam") into bam_files
+        file("${id}.bam.bai") into bam_indexes
 
     script:
         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
@@ -152,13 +154,12 @@ process hisat2_stringtie {
         samtools index -b ${id}.bam
         zcat geneset.gtf.gz > geneset.gtf
         stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-        rm *.bam
-        rm *.bam.bai
         rm *.gtf
     """
 }
 
-
+//   rm *.bam
+// rm *.bam.bai
 
 //run last
 ////////////////////////////////////////////////
