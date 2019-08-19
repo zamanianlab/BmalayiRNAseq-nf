@@ -165,21 +165,21 @@ process hisat2_stringtie {
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
-// prepDE = file("${aux}/scripts/prepDE.py")
-// process stringtie_table_counts {
-//
-//     echo true
-//
-//     publishDir "${output}/diffexp", mode: 'copy'
-//
-//     cpus small_core
-//
-//     output:
-//         file ("gene_count_matrix.csv") into gene_count_matrix
-//         file ("transcript_count_matrix.csv") into transcript_count_matrix
-//
-//     """
-//         python ${prepDE} -i ${output}/expression -l 100 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-//
-//     """
-// }
+prepDE = file("${aux}/scripts/prepDE.py")
+process stringtie_table_counts {
+
+    echo true
+
+    publishDir "${output}/diffexp", mode: 'copy'
+
+    cpus small_core
+
+    output:
+        file ("gene_count_matrix.csv") into gene_count_matrix
+        file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+        python ${prepDE} -i ${output}/expression -l 100 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
