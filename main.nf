@@ -162,7 +162,7 @@ process hisat2_stringtie {
 
 //run last
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts (p and h)
+// ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
 // prepDE = file("${aux}/scripts/prepDE.py")
