@@ -15,7 +15,7 @@ small_core=config.small_core
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data +'fq/*_R{1,2}_001.fastq.gz', flat: true)
+Channel.fromFilePairs(data +'190816_D6WLH/*_R{1,2}_001.fastq.gz', flat: true)
         .into { read_pairs }
 
 ////////////////////////////////////////////////
