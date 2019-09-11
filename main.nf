@@ -15,7 +15,7 @@ small_core=config.small_core
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data +'190816_D6WLH/*_R{1,2}_001.fastq.gz', flat: true)
+Channel.fromFilePairs(data +'190910_D546C/*_R{1,2}_001.fastq.gz', flat: true)
         .into { read_pairs }
 
 ////////////////////////////////////////////////
@@ -166,21 +166,21 @@ process hisat2_stringtie {
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_table_counts {
-
-    echo true
-
-    publishDir "${output}/diffexp", mode: 'copy'
-
-    cpus small_core
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
+// prepDE = file("${aux}/scripts/prepDE.py")
+// process stringtie_table_counts {
+//
+//     echo true
+//
+//     publishDir "${output}/diffexp", mode: 'copy'
+//
+//     cpus small_core
+//
+//     output:
+//         file ("gene_count_matrix.csv") into gene_count_matrix
+//         file ("transcript_count_matrix.csv") into transcript_count_matrix
+//
+//     """
+//         python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+//
+//     """
+// }
