@@ -15,7 +15,7 @@ small_core=config.small_core
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data +'190910_D546C/*_R{1,2}_001.fastq.gz', flat: true)
+Channel.fromFilePairs(data +'190917_D544M/*_R{1,2}_001.fastq.gz', flat: true)
         .into { read_pairs }
 
 ////////////////////////////////////////////////
@@ -166,8 +166,13 @@ process hisat2_stringtie {
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
+params.runTableCounts = false
+
 prepDE = file("${aux}/scripts/prepDE.py")
 process stringtie_table_counts {
+
+    when:
+    runTableCounts == true
 
     echo true
 
