@@ -62,7 +62,7 @@ process fetch_reference {
     publishDir "${output}/reference/", mode: 'copy'
 
     output:
-        file("geneset.gtf.gz") into geneset_gtf
+        file("geneset.gff3.gz") into geneset_gtf
         file("reference.fa.gz") into reference_hisat
 
     """
