@@ -157,6 +157,7 @@ process hisat2_stringtie {
         zcat geneset.gff3.gz > geneset.gff3
         stringtie ${id}.bam -p ${large_core} -G geneset.gff3 -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
         rm *.gtf
+        rm *.gff3
     """
 }
 
