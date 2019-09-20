@@ -50,10 +50,12 @@ process trimmomatic {
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
-release="WBPS13"
+release="WBPS14"
 species="brugia_malayi"
 prjn="PRJNA10729"
 prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+
+//        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
 
 process fetch_reference {
 
@@ -65,7 +67,7 @@ process fetch_reference {
 
     """
         echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+        curl ${prefix}/${species}.${prjn}.${release}.annotations.gff3.gz > geneset.gff3.gz
         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
 
     """
@@ -82,7 +84,7 @@ process hisat2_indexing {
    publishDir "${output}/reference/", mode: 'copy'
 
     input:
-        file("geneset.gtf.gz") from geneset_hisat
+        file("geneset.gff3.gz") from geneset_hisat
         file("reference.fa.gz") from reference_hisat
 
     output:
@@ -91,8 +93,8 @@ process hisat2_indexing {
         file("reference.fa.gz") into reference_build_hisat
 
     """
-        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
-        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
+        zcat geneset.gff3.gz | python ${extract_splice} - > splice.ss
+        zcat geneset.gff3.gz | python ${extract_exons} - > exon.exon
     """
 
 }
@@ -132,7 +134,7 @@ process hisat2_stringtie {
 
     input:
         set val(id), file(forward), file(reverse) from trimmed_read_pairs
-        file("geneset.gtf.gz") from geneset_stringtie
+        file("geneset.gff3.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 
     output:
@@ -152,8 +154,8 @@ process hisat2_stringtie {
         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -b ${id}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+        zcat geneset.gff3.gz > geneset.gff3
+        stringtie ${id}.bam -p ${large_core} -G geneset.gff3 -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
         rm *.gtf
     """
 }
@@ -165,22 +167,22 @@ process hisat2_stringtie {
 ////////////////////////////////////////////////
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
+
+// prepDE = file("${aux}/scripts/prepDE.py")
+// process stringtie_table_counts {
 //
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_table_counts {
-
-    echo true
-
-    publishDir "${output}/diffexp", mode: 'copy'
-
-    cpus small_core
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
+//     echo true
+//
+//     publishDir "${output}/diffexp", mode: 'copy'
+//
+//     cpus small_core
+//
+//     output:
+//         file ("gene_count_matrix.csv") into gene_count_matrix
+//         file ("transcript_count_matrix.csv") into transcript_count_matrix
+//
+//     """
+//         python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+//
+//     """
+// }
