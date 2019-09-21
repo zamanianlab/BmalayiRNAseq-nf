@@ -101,7 +101,7 @@ process build_bwa_index {
 
 //ALIGN TRIMMED READS TO PARASITE GENOME (BWA)
 process align {
-    publishDir "${output}/bwa_stats/", mode: 'copy'
+    publishDir "${output}/bwa_align/", mode: 'copy'
 
     cpus large_core
     tag { id }
@@ -111,7 +111,9 @@ process align {
         file(reference_bwaindex) from bwa_reference_indices.first()
 
     output:
-        file("bwa_reference_align.txt") into bwa_stats
+        file "${id}.bwa_log.txt" into bwa_logs
+        file("${id}.bam") into bwa_bam
+        file("${id}.bam.bai") into bwa_indexes
 
     script:
         fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
@@ -125,7 +127,7 @@ process align {
         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -b ${id}.bam
-        samtools flagstat ${id}.bam > bwa_reference_align.txt
+        samtools flagstat ${id}.bam > ${id}.bwa_log.txt
         """
 }
 
