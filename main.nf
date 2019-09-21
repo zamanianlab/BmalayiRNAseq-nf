@@ -44,36 +44,94 @@ process trimmomatic {
        rm ${id}_2U.fq.gz
    """
 }
-
+trimmed_read_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
 
 ////////////////////////////////////////////////
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
-release="WBPS14"
+release="WBPS13"
 species="brugia_malayi"
 prjn="PRJNA10729"
 prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
-
-//        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
 
 process fetch_reference {
 
     publishDir "${output}/reference/", mode: 'copy'
 
     output:
-        file("geneset.gff3.gz") into geneset_gtf
-        file("reference.fa.gz") into reference_hisat
+        file("geneset.gtf.gz") into geneset_gtf
+        file("reference.fa.gz") into reference_fa
 
     """
         echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.annotations.gff3.gz > geneset.gff3.gz
+        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
 
     """
 
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
+reference_fa.into { reference_hisat; reference_bwa}
+
+
+
+////////////////////////////////////////////////
+// ** - BWA pipeline
+////////////////////////////////////////////////
+
+//INDEX GENOMES - BWA
+process build_bwa_index {
+
+    publishDir "${output}/reference/", mode: 'copy'
+
+    cpus large_core
+
+    input:
+        file("reference.fa.gz") from reference_bwa
+
+    output:
+        file "reference.*" into bwa_reference_indices
+
+    """
+        zcat reference.fa.gz > reference.fa
+        bwa index reference.fa
+    """
+}
+
+//ALIGN TRIMMED READS TO PARASITE GENOME (BWA)
+process align {
+    publishDir "${output}/bwa_stats/", mode: 'copy'
+
+    cpus large_core
+    tag { id }
+
+    input:
+        set val(id), file(reads) from trimmed_reads_bwa
+        file(reference_bwaindex) from bwa_reference_indices.first()
+
+    output:
+        file("bwa_reference_align.txt") into bwa_stats
+
+    script:
+        fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
+
+        """
+        bwa aln -o 0 -n 0 -t ${large_core} reference.fa ${reads} > ${id}.sai
+        bwa samse reference.fa ${id}.sai ${reads} > ${id}.sam
+        samtools view -bS ${id}.sam > ${id}.unsorted.bam
+        rm *.sam
+        samtools flagstat ${id}.unsorted.bam
+        samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+        rm *.unsorted.bam
+        samtools index -b ${id}.bam
+        samtools flagstat ${id}.bam > bwa_reference_align.txt
+        """
+}
+
+////////////////////////////////////////////////
+// ** - HiSat2/Stringtie pipeline
+////////////////////////////////////////////////
 
 // ** - Create HiSat2 Index using reference genome and annotation file
 extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
@@ -84,7 +142,7 @@ process hisat2_indexing {
    publishDir "${output}/reference/", mode: 'copy'
 
     input:
-        file("geneset.gff3.gz") from geneset_hisat
+        file("geneset.gtf.gz") from geneset_hisat
         file("reference.fa.gz") from reference_hisat
 
     output:
@@ -93,8 +151,8 @@ process hisat2_indexing {
         file("reference.fa.gz") into reference_build_hisat
 
     """
-        zcat geneset.gff3.gz | python ${extract_splice} - > splice.ss
-        zcat geneset.gff3.gz | python ${extract_exons} - > exon.exon
+        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
+        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
     """
 
 }
@@ -120,11 +178,7 @@ process build_hisat_index {
 
 }
 
-
-////////////////////////////////////////////////
-// ** - ALIGNMENT AND STRINGTIE (combined) against Parasite
-////////////////////////////////////////////////
-
+// alignment and stringtie combined
 process hisat2_stringtie {
 
     publishDir "${output}/expression", mode: 'copy'
@@ -133,8 +187,8 @@ process hisat2_stringtie {
     tag { id }
 
     input:
-        set val(id), file(forward), file(reverse) from trimmed_read_pairs
-        file("geneset.gff3.gz") from geneset_stringtie
+        set val(id), file(forward), file(reverse) from trimmed_reads_hisat
+        file("geneset.gtf.gz") from geneset_stringtie
         file hs2_indices from hs2_indices.first()
 
     output:
@@ -154,10 +208,9 @@ process hisat2_stringtie {
         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
         rm *.unsorted.bam
         samtools index -b ${id}.bam
-        zcat geneset.gff3.gz > geneset.gff3
-        stringtie ${id}.bam -p ${large_core} -G geneset.gff3 -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+        zcat geneset.gtf.gz > geneset.gtf
+        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
         rm *.gtf
-        rm *.gff3
     """
 }
 
@@ -169,21 +222,21 @@ process hisat2_stringtie {
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
-// prepDE = file("${aux}/scripts/prepDE.py")
-// process stringtie_table_counts {
-//
-//     echo true
-//
-//     publishDir "${output}/diffexp", mode: 'copy'
-//
-//     cpus small_core
-//
-//     output:
-//         file ("gene_count_matrix.csv") into gene_count_matrix
-//         file ("transcript_count_matrix.csv") into transcript_count_matrix
-//
-//     """
-//         python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-//
-//     """
-// }
+prepDE = file("${aux}/scripts/prepDE.py")
+process stringtie_table_counts {
+
+    echo true
+
+    publishDir "${output}/diffexp", mode: 'copy'
+
+    cpus small_core
+
+    output:
+        file ("gene_count_matrix.csv") into gene_count_matrix
+        file ("transcript_count_matrix.csv") into transcript_count_matrix
+
+    """
+        python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+
+    """
+}
