@@ -107,7 +107,7 @@ process align {
     tag { id }
 
     input:
-        set val(id), file(reads) from trimmed_reads_bwa
+        set val(id), file(forward), file(reverse) from trimmed_reads_bwa
         file(reference_bwaindex) from bwa_reference_indices.first()
 
     output:
@@ -119,8 +119,7 @@ process align {
         fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
 
         """
-        bwa aln -o 0 -n 0 -t ${large_core} reference.fa ${reads} > ${id}.sai
-        bwa samse reference.fa ${id}.sai ${reads} > ${id}.sam
+        bwa mem reference.fa ${forward} ${reverse} > ${id}.sam
         samtools view -bS ${id}.sam > ${id}.unsorted.bam
         rm *.sam
         samtools flagstat ${id}.unsorted.bam
