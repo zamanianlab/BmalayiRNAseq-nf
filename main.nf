@@ -116,7 +116,7 @@ process align {
         file("${id}.bam.bai") into bwa_indexes
 
     script:
-        fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
+        //fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
 
         """
         bwa mem reference.fa ${forward} ${reverse} > ${id}.sam
