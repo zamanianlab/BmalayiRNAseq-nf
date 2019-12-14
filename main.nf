@@ -69,7 +69,6 @@ process fetch_reference {
         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
 
     """
-
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
 reference_fa.into { reference_hisat; reference_bwa}
@@ -128,6 +127,7 @@ process align {
         samtools index -b ${id}.bam
         samtools flagstat ${id}.bam > ${id}.bwa_log.txt
         """
+
 }
 
 ////////////////////////////////////////////////
@@ -215,29 +215,26 @@ process hisat2_stringtie {
     """
 }
 
-//   rm *.bam
-// rm *.bam.bai
-
 //run last
 ////////////////////////////////////////////////
 // ** - STRINGTIE table counts
 ////////////////////////////////////////////////
 
-prepDE = file("${aux}/scripts/prepDE.py")
-process stringtie_table_counts {
-
-    echo true
-
-    publishDir "${output}/diffexp", mode: 'copy'
-
-    cpus small_core
-
-    output:
-        file ("gene_count_matrix.csv") into gene_count_matrix
-        file ("transcript_count_matrix.csv") into transcript_count_matrix
-
-    """
-        python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-
-    """
-}
+// prepDE = file("${aux}/scripts/prepDE.py")
+// process stringtie_table_counts {
+//
+//     echo true
+//
+//     publishDir "${output}/diffexp", mode: 'copy'
+//
+//     cpus small_core
+//
+//     output:
+//         file ("gene_count_matrix.csv") into gene_count_matrix
+//         file ("transcript_count_matrix.csv") into transcript_count_matrix
+//
+//     """
+//         python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+//
+//     """
+// }
