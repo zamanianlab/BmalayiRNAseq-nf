@@ -210,7 +210,7 @@ process hisat2_stringtie {
         rm *.unsorted.bam
         samtools index -b ${id}.bam
         zcat geneset.gtf.gz > geneset.gtf
-        stringtie -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf ${id}.bam
+        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
         rm *.gtf
     """
 }
