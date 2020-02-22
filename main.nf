@@ -183,8 +183,8 @@ process build_hisat_index {
 process hisat2_stringtie {
 
     publishDir "${output}/expression", mode: 'copy'
-    publishDir "${output}/expression/bams/", pattern: '*.bam'
-    publishDir "${output}/expression/bams/", pattern: '*.bam.bai'
+    publishDir "${output}/bams", pattern: '*.bam'
+    publishDir "${output}/bams", pattern: '*.bam.bai'
 
     cpus large_core
     tag { id }
