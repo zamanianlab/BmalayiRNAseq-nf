@@ -50,28 +50,28 @@ trimmed_read_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
-release="WBPS13"
-species="brugia_malayi"
-prjn="PRJNA10729"
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
-
-process fetch_reference {
-
-    publishDir "${output}/reference/", mode: 'copy'
-
-    output:
-        file("geneset.gtf.gz") into geneset_gtf
-        file("reference.fa.gz") into reference_fa
-
-    """
-        echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
-        curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
-
-    """
-}
-geneset_gtf.into { geneset_hisat; geneset_stringtie }
-reference_fa.into { reference_hisat; reference_bwa}
+// release="WBPS13"
+// species="brugia_malayi"
+// prjn="PRJNA10729"
+// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+//
+// process fetch_reference {
+//
+//     publishDir "${output}/reference/", mode: 'copy'
+//
+//     output:
+//         file("geneset.gtf.gz") into geneset_gtf
+//         file("reference.fa.gz") into reference_fa
+//
+//     """
+//         echo '${prefix}'
+//         curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+//         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
+//
+//     """
+// }
+// geneset_gtf.into { geneset_hisat; geneset_stringtie }
+// reference_fa.into { reference_hisat; reference_bwa}
 
 
 ////////////////////////////////////////////////
