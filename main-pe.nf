@@ -8,12 +8,15 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
+// Additional params
+params.dir = "200217_AHNHN3DMXX"
+
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data +'200217_AHNHN3DMXX/*_R{1,2}_001.fastq.gz', flat: true)
-        .into { read_pairs }
+Channel.fromFilePairs(data +'${params.dir}/*_R{1,2}_001.fastq.gz', flat: true)
+        .into { fq_pairs }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
@@ -26,7 +29,7 @@ process trimmomatic {
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
 
    input:
-       set val(id), file(forward), file(reverse) from read_pairs
+       set val(id), file(forward), file(reverse) from fq_pairs
 
    output:
        set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_read_pairs
