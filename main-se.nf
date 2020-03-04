@@ -9,13 +9,13 @@ large_core=config.large_core
 small_core=config.small_core
 
 
-params.in = "181220_BCCV00ANXX"
+params.dir = "181220_BCCV00ANXX"
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
 ////////////////////////////////////////////////
 
-reads = Channel.fromPath(data + ${in} + "/*.fastq.gz")
+reads = Channel.fromPath(data + "${dir}/*.fastq.gz")
                         .map { n -> [ n.getName(), n ] }
 
 ////////////////////////////////////////////////
