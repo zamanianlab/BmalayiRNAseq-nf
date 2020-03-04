@@ -15,7 +15,7 @@ params.dir = "200217_AHNHN3DMXX"
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data +'${params.dir}/*_R{1,2}_001.fastq.gz', flat: true)
+Channel.fromFilePairs(data +"${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
         .set { fq_pairs }
 
 ////////////////////////////////////////////////
