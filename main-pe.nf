@@ -78,88 +78,88 @@ trimmed_read_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
 // ** - HiSat2/Stringtie pipeline
 ////////////////////////////////////////////////
 
-// ** - Create HiSat2 Index using reference genome and annotation file
-extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
-extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
-
-process hisat2_indexing {
-
-   publishDir "${output}/reference/", mode: 'copy'
-
-    input:
-        file("geneset.gtf.gz") from geneset_hisat
-        file("reference.fa.gz") from reference_hisat
-
-    output:
-        file("splice.ss") into splice_hisat
-        file("exon.exon") into exon_hisat
-        file("reference.fa.gz") into reference_build_hisat
-
-    """
-        zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
-        zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
-    """
-
-}
-
-process build_hisat_index {
-
-    publishDir "${output}/reference/", mode: 'copy'
-
-    cpus large_core
-
-    input:
-        file("splice.ss") from splice_hisat
-        file("exon.exon") from exon_hisat
-        file("reference.fa.gz") from reference_build_hisat
-
-    output:
-        file "*.ht2" into hs2_indices
-
-    """
-        zcat reference.fa.gz > reference.fa
-        hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
-    """
-
-}
-
-// alignment and stringtie combined
-process hisat2_stringtie {
-
-    publishDir "${output}/expression", mode: 'copy'
-    publishDir "${output}/bams", pattern: '*.bam'
-    publishDir "${output}/bams", pattern: '*.bam.bai'
-
-    cpus large_core
-    tag { id }
-
-    input:
-        set val(id), file(forward), file(reverse) from trimmed_reads_hisat
-        file("geneset.gtf.gz") from geneset_stringtie
-        file hs2_indices from hs2_indices.first()
-
-    output:
-        file "${id}.hisat2_log.txt" into alignment_logs
-        file("${id}/*") into stringtie_exp
-        file("${id}.bam") into bam_files
-        file("${id}.bam.bai") into bam_indexes
-
-    script:
-        index_base = hs2_indices[0].toString() - ~/.\d.ht2/
-
-    """
-        hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
-        samtools view -bS ${id}.sam > ${id}.unsorted.bam
-        rm *.sam
-        samtools flagstat ${id}.unsorted.bam
-        samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-        rm *.unsorted.bam
-        samtools index -b ${id}.bam
-        zcat geneset.gtf.gz > geneset.gtf
-        stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
-        rm *.gtf
-    """
-}
+// // ** - Create HiSat2 Index using reference genome and annotation file
+// extract_exons = file("${aux}/scripts/hisat2_extract_exons.py")
+// extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
+//
+// process hisat2_indexing {
+//
+//    publishDir "${output}/reference/", mode: 'copy'
+//
+//     input:
+//         file("geneset.gtf.gz") from geneset_hisat
+//         file("reference.fa.gz") from reference_hisat
+//
+//     output:
+//         file("splice.ss") into splice_hisat
+//         file("exon.exon") into exon_hisat
+//         file("reference.fa.gz") into reference_build_hisat
+//
+//     """
+//         zcat geneset.gtf.gz | python ${extract_splice} - > splice.ss
+//         zcat geneset.gtf.gz | python ${extract_exons} - > exon.exon
+//     """
+//
+// }
+//
+// process build_hisat_index {
+//
+//     publishDir "${output}/reference/", mode: 'copy'
+//
+//     cpus large_core
+//
+//     input:
+//         file("splice.ss") from splice_hisat
+//         file("exon.exon") from exon_hisat
+//         file("reference.fa.gz") from reference_build_hisat
+//
+//     output:
+//         file "*.ht2" into hs2_indices
+//
+//     """
+//         zcat reference.fa.gz > reference.fa
+//         hisat2-build -p ${large_core} --ss splice.ss --exon exon.exon reference.fa reference.hisat2_index
+//     """
+//
+// }
+//
+// // alignment and stringtie combined
+// process hisat2_stringtie {
+//
+//     publishDir "${output}/expression", mode: 'copy'
+//     publishDir "${output}/bams", pattern: '*.bam'
+//     publishDir "${output}/bams", pattern: '*.bam.bai'
+//
+//     cpus large_core
+//     tag { id }
+//
+//     input:
+//         set val(id), file(forward), file(reverse) from trimmed_reads_hisat
+//         file("geneset.gtf.gz") from geneset_stringtie
+//         file hs2_indices from hs2_indices.first()
+//
+//     output:
+//         file "${id}.hisat2_log.txt" into alignment_logs
+//         file("${id}/*") into stringtie_exp
+//         file("${id}.bam") into bam_files
+//         file("${id}.bam.bai") into bam_indexes
+//
+//     script:
+//         index_base = hs2_indices[0].toString() - ~/.\d.ht2/
+//
+//     """
+//         hisat2 -p ${large_core} -x $index_base -1 ${forward} -2 ${reverse} -S ${id}.sam --rg-id "${id}" --rg "SM:${id}" --rg "PL:ILLUMINA" 2> ${id}.hisat2_log.txt
+//         samtools view -bS ${id}.sam > ${id}.unsorted.bam
+//         rm *.sam
+//         samtools flagstat ${id}.unsorted.bam
+//         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
+//         rm *.unsorted.bam
+//         samtools index -b ${id}.bam
+//         zcat geneset.gtf.gz > geneset.gtf
+//         stringtie ${id}.bam -p ${large_core} -G geneset.gtf -A ${id}/${id}_abund.tab -e -B -o ${id}/${id}_expressed.gtf
+//         rm *.gtf
+//     """
+// }
 
 //run last
 ////////////////////////////////////////////////
