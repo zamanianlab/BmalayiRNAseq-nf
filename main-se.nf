@@ -15,7 +15,7 @@ params.dir = "181220_BCCV00ANXX"
 // ** - Pull in fq files (single)
 ////////////////////////////////////////////////
 
-reads = Channel.fromPath(data + "${dir}/*.fastq.gz")
+reads = Channel.fromPath(data + "${params.dir}/*.fastq.gz")
                         .map { n -> [ n.getName(), n ] }
 
 ////////////////////////////////////////////////
