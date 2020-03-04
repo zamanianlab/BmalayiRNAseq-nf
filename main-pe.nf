@@ -16,7 +16,7 @@ params.dir = "200217_AHNHN3DMXX"
 ////////////////////////////////////////////////
 
 Channel.fromFilePairs(data +'${params.dir}/*_R{1,2}_001.fastq.gz', flat: true)
-        .into { fq_pairs }
+        .set { fq_pairs }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
