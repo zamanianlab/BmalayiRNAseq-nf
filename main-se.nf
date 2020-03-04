@@ -1,19 +1,21 @@
 #!/usr/bin/env nextflow
 
 // Edit nextflow.configuration!
+data=config.brc_location
 aux=config.aux_location
-data=config.data_location
 output=config.output_location
 
 large_core=config.large_core
 small_core=config.small_core
 
 
+params.in = "181220_BCCV00ANXX"
+
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
 ////////////////////////////////////////////////
 
-fq_set = Channel.fromPath(data + "181220_BCCV00ANXX/*_001.fastq.gz")
+reads = Channel.fromPath(data + in + "/*.fastq.gz")
                         .map { n -> [ n.getName(), n ] }
 
 ////////////////////////////////////////////////
@@ -27,7 +29,7 @@ process trimmomatic {
    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
 
    input:
-       set val(id), file(reads) from fq_set
+       set val(id), file(reads) from reads
 
    output:
        set id, file("${id}_trim.fq.gz") into trimmed_reads
@@ -40,7 +42,8 @@ process trimmomatic {
 
 
    """
-       trimmomatic SE -threads ${large_core} $forward $reverse -baseout ${id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
+       trimmomatic SE -threads ${large_core} ${reads} -baseout ${id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
+      trimmomatic SE -phred33 -threads ${large_core} ${reads} ${name_out} ILLUMINACLIP:${adapters}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:15 &> ${reads}_trimout.txt
        rm ${id}_1U.fq.gz
        rm ${id}_2U.fq.gz
    """
@@ -75,61 +78,6 @@ geneset_gtf.into { geneset_hisat; geneset_stringtie }
 reference_fa.into { reference_hisat; reference_bwa}
 
 
-
-////////////////////////////////////////////////
-// ** - BWA pipeline
-////////////////////////////////////////////////
-
-// //INDEX GENOMES - BWA
-// process build_bwa_index {
-//
-//     publishDir "${output}/reference/", mode: 'copy'
-//
-//     cpus large_core
-//
-//     input:
-//         file("reference.fa.gz") from reference_bwa
-//
-//     output:
-//         file "reference.*" into bwa_reference_indices
-//
-//     """
-//         zcat reference.fa.gz > reference.fa
-//         bwa index reference.fa
-//     """
-// }
-//
-// //ALIGN TRIMMED READS TO PARASITE GENOME (BWA)
-// process align {
-//     publishDir "${output}/bwa_align/", mode: 'copy'
-//
-//     cpus large_core
-//     tag { id }
-//
-//     input:
-//         set val(id), file(forward), file(reverse) from trimmed_reads_bwa
-//         file(reference_bwaindex) from bwa_reference_indices.first()
-//
-//     output:
-//         file "${id}.bwa_log.txt" into bwa_logs
-//         file("${id}.bam") into bwa_bam
-//         file("${id}.bam.bai") into bwa_indexes
-//
-//     script:
-//         //fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
-//
-//         """
-//         bwa mem reference.fa ${forward} ${reverse} > ${id}.sam
-//         samtools view -bS ${id}.sam > ${id}.unsorted.bam
-//         rm *.sam
-//         samtools flagstat ${id}.unsorted.bam
-//         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-//         rm *.unsorted.bam
-//         samtools index -b ${id}.bam
-//         samtools flagstat ${id}.bam > ${id}.bwa_log.txt
-//         """
-//
-// }
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline

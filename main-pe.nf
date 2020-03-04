@@ -1,15 +1,12 @@
 #!/usr/bin/env nextflow
 
 // Edit nextflow.configuration!
+data=config.brc_location
 aux=config.aux_location
-data=config.data_location
 output=config.output_location
 
 large_core=config.large_core
 small_core=config.small_core
-
-// ** - Get txt file of SRA accession IDs from 'auxillary' folder
-//sra_file = Channel.fromPath(aux + "SRR_Acc_List_UGA.txt")
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -73,62 +70,6 @@ process fetch_reference {
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
 reference_fa.into { reference_hisat; reference_bwa}
 
-
-
-////////////////////////////////////////////////
-// ** - BWA pipeline
-////////////////////////////////////////////////
-
-// //INDEX GENOMES - BWA
-// process build_bwa_index {
-//
-//     publishDir "${output}/reference/", mode: 'copy'
-//
-//     cpus large_core
-//
-//     input:
-//         file("reference.fa.gz") from reference_bwa
-//
-//     output:
-//         file "reference.*" into bwa_reference_indices
-//
-//     """
-//         zcat reference.fa.gz > reference.fa
-//         bwa index reference.fa
-//     """
-// }
-//
-// //ALIGN TRIMMED READS TO PARASITE GENOME (BWA)
-// process align {
-//     publishDir "${output}/bwa_align/", mode: 'copy'
-//
-//     cpus large_core
-//     tag { id }
-//
-//     input:
-//         set val(id), file(forward), file(reverse) from trimmed_reads_bwa
-//         file(reference_bwaindex) from bwa_reference_indices.first()
-//
-//     output:
-//         file "${id}.bwa_log.txt" into bwa_logs
-//         file("${id}.bam") into bwa_bam
-//         file("${id}.bam.bai") into bwa_indexes
-//
-//     script:
-//         //fa_prefix = reads[0].toString() - ~/(_trim)(\.fq\.gz)$/
-//
-//         """
-//         bwa mem reference.fa ${forward} ${reverse} > ${id}.sam
-//         samtools view -bS ${id}.sam > ${id}.unsorted.bam
-//         rm *.sam
-//         samtools flagstat ${id}.unsorted.bam
-//         samtools sort -@ ${large_core} -o ${id}.bam ${id}.unsorted.bam
-//         rm *.unsorted.bam
-//         samtools index -b ${id}.bam
-//         samtools flagstat ${id}.bam > ${id}.bwa_log.txt
-//         """
-//
-// }
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
