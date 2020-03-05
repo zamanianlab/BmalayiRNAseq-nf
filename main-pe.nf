@@ -10,7 +10,8 @@ small_core=config.small_core
 
 // Additional params (call from commandline: --dir "200217_AHNHN3DMXX")
 params.dir = "200217_AHNHN3DMXX"
-params.stc = false // flag for final process (stringtie_table_counts: --stc)
+// flag for final process (stringtie_table_counts: --stc)
+params.stc = false
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -42,7 +43,7 @@ process trimmomatic {
        rm ${id}_2U.fq.gz
    """
 }
-trimmed_fq_pairs.into { trimmed_reads_hisat }
+trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
@@ -124,7 +125,7 @@ process build_hisat_index {
 // alignment and stringtie combined
 process hisat2_stringtie {
 
-  publishDir "${output}/expression", mode: 'copy', pattern: '/*'
+  publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
   publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
   publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
   publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
