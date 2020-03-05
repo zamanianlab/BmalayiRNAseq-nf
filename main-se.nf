@@ -8,7 +8,7 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// Additional params
+// Additional params (call from commandline: --dir "181220_BCCV00ANXX")
 params.dir = "181220_BCCV00ANXX"
 
 ////////////////////////////////////////////////
@@ -32,19 +32,40 @@ process trimmomatic {
        set val(id), file(reads) from fqs
 
    output:
-       set id, file("${id}_trim.fq.gz") into trimmed_reads
+       set id, file("${id}_trim.fq.gz") into trimmed_fqs
       // set val(id_out), file(id_out) into fq_trim
        file("*_trimout.txt") into trim_log
 
-
-   script:
-   id_out = id.replace('.fastq.gz', '_trim.fq.gz')
-
-
    """
-       trimmomatic SE -threads ${large_core} ${reads} -baseout ${id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
-       trimmomatic SE -phred33 -threads ${large_core} ${reads} ${name_out} ILLUMINACLIP:${adapters}:2:30:10 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:15 &> ${reads}_trimout.txt
-       rm ${id}_1U.fq.gz
-       rm ${id}_2U.fq.gz
+       trimmomatic SE -threads ${large_core} ${reads} ${id}_trim.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
+
    """
 }
+trimmed_fqs.into { trimmed_reads_hisat }
+
+////////////////////////////////////////////////
+// ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
+////////////////////////////////////////////////
+
+// release="WBPS13"
+// species="brugia_malayi"
+// prjn="PRJNA10729"
+// prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+//
+// process fetch_reference {
+//
+//     publishDir "${output}/reference/", mode: 'copy'
+//
+//     output:
+//         file("geneset.gtf.gz") into geneset_gtf
+//         file("reference.fa.gz") into reference_fa
+//
+//     """
+//         echo '${prefix}'
+//         curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+//         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
+//
+//     """
+// }
+// geneset_gtf.into { geneset_hisat; geneset_stringtie }
+// reference_fa.into { reference_hisat; reference_bwa}

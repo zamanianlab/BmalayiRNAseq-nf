@@ -8,8 +8,8 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// Additional params
-params.dir = ""
+// Additional params (call from commandline: --dir "200217_AHNHN3DMXX")
+params.dir = "200217_AHNHN3DMXX"
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -44,7 +44,7 @@ process trimmomatic {
        rm ${id}_2U.fq.gz
    """
 }
-trimmed_fq_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
+trimmed_fq_pairs.into { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
