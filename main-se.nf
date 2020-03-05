@@ -8,7 +8,7 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-
+// Additional params
 params.dir = "181220_BCCV00ANXX"
 
 ////////////////////////////////////////////////
