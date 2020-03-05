@@ -15,8 +15,8 @@ small_core=config.small_core
 // ** - Pull in fq files (paired)
 ////////////////////////////////////////////////
 
-Channel.fromFilePairs(data + "200217_AHNHN3DMXX/*_R{1,2}_001.fastq.gz", flat: true)
-        .set { fq_pairs }
+Channel.fromFilePairs(data + '200217_AHNHN3DMXX/*_R{1,2}_001.fastq.gz', flat: true)
+        .into { fq_pairs }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
