@@ -174,7 +174,7 @@ process stringtie_table_counts {
     cpus small_core
 
     when:
-    params.stc
+      params.stc
 
     output:
         file ("gene_count_matrix.csv") into gene_count_matrix
