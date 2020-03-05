@@ -32,17 +32,17 @@ process trimmomatic {
        set val(id), file(reads) from fqs
 
    output:
-       set id_out, file("${id_out}") into trimmed_fqs
+       set id_out, file("${id_out}_trim.fq.gz") into trimmed_fqs
       // set val(id_out), file(id_out) into fq_trim
        file("*_trimout.txt") into trim_log
 
 
    script:
-   id_out = id.replace('.fastq.gz', '_trim.fq.gz')
+   id_out = id.replace('.fastq.gz', '')
 
 
    """
-       trimmomatic SE -threads ${large_core} ${reads} ${id_out} ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id_out}_trimout.txt
+       trimmomatic SE -threads ${large_core} ${reads} ${id_out}_trim.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id_out}_trimout.txt
 
    """
 }
