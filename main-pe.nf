@@ -9,7 +9,7 @@ large_core=config.large_core
 small_core=config.small_core
 
 // Additional params
-params.dir = "200217_AHNHN3DMXX"
+params.dir = ""
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
