@@ -10,7 +10,7 @@ small_core=config.small_core
 
 // Additional params (call from commandline: --dir "200217_AHNHN3DMXX")
 params.dir = "200217_AHNHN3DMXX"
-params.stc = FALSE // flag for final process (stringtie_table_counts: --stc)
+params.stc = false // flag for final process (stringtie_table_counts: --stc)
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)

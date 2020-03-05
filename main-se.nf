@@ -10,7 +10,7 @@ small_core=config.small_core
 
 // Additional params (call from commandline: --dir "181220_BCCV00ANXX")
 params.dir = "181220_BCCV00ANXX"
-params.stc = FALSE // flag for final process (stringtie_table_counts: --stc)
+params.stc = false // flag for final process (stringtie_table_counts: --stc)
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
@@ -176,7 +176,7 @@ process stringtie_table_counts {
     cpus small_core
 
     when:
-    params.stc
+      params.stc
 
     output:
         file ("gene_count_matrix.csv") into gene_count_matrix
