@@ -16,7 +16,7 @@ small_core=config.small_core
 ////////////////////////////////////////////////
 
 Channel.fromFilePairs(data + '200217_AHNHN3DMXX/*_R{1,2}_001.fastq.gz', flat: true)
-        .into { fq_pairs }
+        .set { fq_pairs }
 
 ////////////////////////////////////////////////
 // ** TRIM READS
@@ -32,7 +32,7 @@ process trimmomatic {
        set val(id), file(forward), file(reverse) from fq_pairs
 
    output:
-       set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_read_pairs
+       set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_fq_pairs
        file("*_trimout.txt") into trim_log
 
    script:
@@ -44,7 +44,7 @@ process trimmomatic {
        rm ${id}_2U.fq.gz
    """
 }
-trimmed_read_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
+trimmed_fq_pairs.into { trimmed_reads_hisat ; trimmed_reads_bwa}
 
 ////////////////////////////////////////////////
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
