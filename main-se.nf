@@ -10,7 +10,8 @@ small_core=config.small_core
 
 // Additional params (call from commandline: --dir "181220_BCCV00ANXX")
 params.dir = "181220_BCCV00ANXX"
-params.stc = false // flag for final process (stringtie_table_counts: --stc)
+// flag for final process (stringtie_table_counts: --stc)
+params.stc = false
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
@@ -126,7 +127,7 @@ process build_hisat_index {
 // alignment and stringtie combined
 process hisat2_stringtie {
 
-    publishDir "${output}/expression", mode: 'copy', pattern: '/*'
+    publishDir "${output}/expression", mode: 'copy', pattern: '/**/*'
     publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
     publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
