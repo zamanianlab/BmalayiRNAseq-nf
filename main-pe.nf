@@ -124,9 +124,10 @@ process build_hisat_index {
 // alignment and stringtie combined
 process hisat2_stringtie {
 
-    publishDir "${output}/expression", mode: 'copy'
-    publishDir "${output}/bams", pattern: '*.bam'
-    publishDir "${output}/bams", pattern: '*.bam.bai'
+  publishDir "${output}/expression", mode: 'copy', pattern: '/*'
+  publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+  publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
+  publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus large_core
     tag { id }
