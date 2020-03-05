@@ -46,7 +46,7 @@ process trimmomatic {
 
    """
 }
-trimmed_fqs.into { trimmed_reads_hisat }
+trimmed_fqs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
@@ -127,7 +127,7 @@ process build_hisat_index {
 // alignment and stringtie combined
 process hisat2_stringtie {
 
-    publishDir "${output}/expression", mode: 'copy', pattern: '/**/*'
+    publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
     publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
     publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
     publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
