@@ -8,10 +8,12 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// Additional params (call from commandline: --dir "200217_AHNHN3DMXX")
+// Additional params (--dir "200217_AHNHN3DMXX")
 params.dir = "200217_AHNHN3DMXX"
-// flag for final process (stringtie_table_counts: --stc)
+// flag for final stringtie_table_counts process (--stc)
 params.stc = false
+// flag for genome (--genome "Bma" / "Dim" / "Aeg")
+params.genome = "Bma"
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -46,15 +48,22 @@ process trimmomatic {
 trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
-// ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
+// ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
 release="WBPS13"
-species="brugia_malayi"
-prjn="PRJNA10729"
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
 
-process fetch_reference {
+if( ${params.genome} = "Bma" ) {
+    species_prjn="brugia_malayi/PRJNA10729"
+} else if( ${params.genome} = "Dim" ) {
+   species_prjn="dirofilaria_immitis/PRJEB1797"
+} else {
+    println "Available genome options: Bma or Dim"
+}
+
+prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species_prjn}"
+
+process fetch_genome {
 
     publishDir "${output}/reference/", mode: 'copy'
 
