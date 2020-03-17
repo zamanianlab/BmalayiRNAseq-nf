@@ -12,7 +12,7 @@ small_core=config.small_core
 params.dir = "200217_AHNHN3DMXX"
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
-// flag for genome (--genome "Bma" / "Dim" / "Aeg")
+// flag for genome (--genome "Bma" / "Dim")
 params.genome = "Bma"
 
 ////////////////////////////////////////////////
@@ -53,15 +53,15 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 release="WBPS13"
 
-if( ${params.genome} = "Bma" ) {
+if( "${params.genome}" = "Bma" ) {
     species_prjn="brugia_malayi/PRJNA10729"
-} else if( ${params.genome} = "Dim" ) {
-   species_prjn="dirofilaria_immitis/PRJEB1797"
+} else if( "${params.genome}" = "Dim" ) {
+    species_prjn="dirofilaria_immitis/PRJEB1797"
 } else {
     println "Available genome options: Bma or Dim"
 }
 
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species_prjn}"
+prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species_prjn}"
 
 process fetch_genome {
 
