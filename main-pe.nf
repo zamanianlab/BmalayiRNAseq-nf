@@ -14,10 +14,9 @@ params.dir = "200311_AHNNC7DMXX"
 params.stc = false
 
 //WB genome information
-params.release="WBPS13"
+params.release = "WBPS13"
 params.species = "dirofilaria_immitis" //brugia_malayi
 params.prjn = "PRJEB1797" //PRJNA10729
-
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -54,7 +53,6 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
-
 
 process fetch_genome {
 
