@@ -51,26 +51,29 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
-release="WBPS13"
 
 process fetch_genome {
-
-    if( "${params.genome}" = "Bma" ) {
-      species="brugia_malayi"
-      prjn="PRJNA10729"
-    } else if( "${params.genome}" = "Dim" ) {
-      species_prjn="dirofilaria_immitis"
-      prjn="PRJEB1797"
-    } else {
-      println "Available genome options: Bma or Dim"
-    }
-    prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species}/${prjn}"
 
     publishDir "${output}/reference/", mode: 'copy'
 
     output:
         file("geneset.gtf.gz") into geneset_gtf
         file("reference.fa.gz") into reference_fa
+
+    script:
+        release="WBPS13"
+        if( "${params.genome}" = "Bma" ) {
+          species="brugia_malayi"
+          prjn="PRJNA10729"
+        }
+        else if( "${params.genome}" = "Dim" ) {
+          species_prjn="dirofilaria_immitis"
+          prjn="PRJEB1797"
+        }
+        else {
+          println "Available genome options: Bma or Dim"
+        }
+        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species}/${prjn}"
 
     """
         echo '${prefix}'
