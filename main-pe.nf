@@ -53,17 +53,18 @@ trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 release="WBPS13"
 
-if( "${params.genome}" = "Bma" ) {
-    species_prjn="brugia_malayi/PRJNA10729"
-} else if( "${params.genome}" = "Dim" ) {
-    species_prjn="dirofilaria_immitis/PRJEB1797"
-} else {
-    println "Available genome options: Bma or Dim"
-}
-
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species_prjn}"
-
 process fetch_genome {
+
+    if( "${params.genome}" = "Bma" ) {
+      species="brugia_malayi"
+      prjn="PRJNA10729"
+    } else if( "${params.genome}" = "Dim" ) {
+      species_prjn="dirofilaria_immitis"
+      prjn="PRJEB1797"
+    } else {
+      println "Available genome options: Bma or Dim"
+    }
+    prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species}/${prjn}"
 
     publishDir "${output}/reference/", mode: 'copy'
 
@@ -75,7 +76,6 @@ process fetch_genome {
         echo '${prefix}'
         curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
         curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
-
     """
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
@@ -134,10 +134,10 @@ process build_hisat_index {
 // alignment and stringtie combined
 process hisat2_stringtie {
 
-  publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
-  publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
-  publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
-  publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
+    publishDir "${output}/expression", mode: 'copy', pattern: '**/*'
+    publishDir "${output}/expression", mode: 'copy', pattern: '*.hisat2_log.txt'
+    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam'
+    publishDir "${output}/bams", mode: 'copy', pattern: '*.bam.bai'
 
     cpus large_core
     tag { id }
@@ -170,9 +170,8 @@ process hisat2_stringtie {
     """
 }
 
-//run last with flag
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts
+// ** - STRINGTIE table counts (run last with --stc flag)
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
