@@ -67,13 +67,13 @@ process fetch_genome {
           prjn="PRJNA10729"
         }
         else if( "${params.genome}" = "Dim" ) {
-          species_prjn="dirofilaria_immitis"
+          species="dirofilaria_immitis"
           prjn="PRJEB1797"
         }
         else {
           println "Available genome options: Bma or Dim"
         }
-        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/${species}/${prjn}"
+        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
 
     """
         echo '${prefix}'
