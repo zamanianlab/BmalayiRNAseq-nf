@@ -12,8 +12,12 @@ small_core=config.small_core
 params.dir = "200311_AHNNC7DMXX"
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
-// flag for genome (--genome "Bma" / "Dim")
-params.genome = "Dim"
+
+//WB genome information
+params.release="WBPS13"
+params.species = "dirofilaria_immitis" //brugia_malayi
+params.prjn = "PRJEB1797" //PRJNA10729
+
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -61,24 +65,13 @@ process fetch_genome {
         file("reference.fa.gz") into reference_fa
 
     script:
-        release="WBPS13"
-        if( "${params.genome}" = "Bma" ) {
-          species="brugia_malayi"
-          prjn="PRJNA10729"
-        }
-        else if( "${params.genome}" = "Dim" ) {
-          species="dirofilaria_immitis"
-          prjn="PRJEB1797"
-        }
-        else {
-          println "Available genome options: Bma or Dim"
-        }
-        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
+
+        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${params.release}/species/${params.species}/${params.prjn}"
 
     """
         echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
-        curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
+        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz > reference.fa.gz
     """
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
