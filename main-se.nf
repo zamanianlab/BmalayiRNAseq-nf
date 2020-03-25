@@ -13,6 +13,11 @@ params.dir = "181220_BCCV00ANXX"
 // flag for final process (stringtie_table_counts: --stc)
 params.stc = false
 
+//WB genome information
+params.release = "WBPS13"
+params.species = "dirofilaria_immitis" //brugia_malayi
+params.prjn = "PRJEB1797" //PRJNA10729
+
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
 ////////////////////////////////////////////////
@@ -49,15 +54,10 @@ process trimmomatic {
 trimmed_fqs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
-// ** - Fetch Parasite (P) reference genome (fa.gz) and gene annotation file (gtf.gz)
+// ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
-release="WBPS13"
-species="brugia_malayi"
-prjn="PRJNA10729"
-prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${release}/species/${species}/${prjn}"
-
-process fetch_reference {
+process fetch_genome {
 
     publishDir "${output}/reference/", mode: 'copy'
 
@@ -65,15 +65,19 @@ process fetch_reference {
         file("geneset.gtf.gz") into geneset_gtf
         file("reference.fa.gz") into reference_fa
 
+    script:
+
+        prefix="ftp://ftp.ebi.ac.uk/pub/databases/wormbase/parasite/releases/${params.release}/species/${params.species}/${params.prjn}"
+
     """
         echo '${prefix}'
-        curl ${prefix}/${species}.${prjn}.${release}.canonical_geneset.gtf.gz > geneset.gtf.gz
-        curl ${prefix}/${species}.${prjn}.${release}.genomic.fa.gz > reference.fa.gz
-
+        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.canonical_geneset.gtf.gz > geneset.gtf.gz
+        curl ${prefix}/${params.species}.${params.prjn}.${params.release}.genomic.fa.gz > reference.fa.gz
     """
 }
 geneset_gtf.into { geneset_hisat; geneset_stringtie }
 reference_fa.into { reference_hisat; reference_bwa}
+
 
 ////////////////////////////////////////////////
 // ** - HiSat2/Stringtie pipeline
@@ -163,9 +167,8 @@ process hisat2_stringtie {
     """
 }
 
-//run last with flag
 ////////////////////////////////////////////////
-// ** - STRINGTIE table counts
+// ** - STRINGTIE table counts (run last with --stc flag)
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
