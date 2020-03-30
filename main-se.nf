@@ -9,7 +9,7 @@ large_core=config.large_core
 small_core=config.small_core
 
 // Additional params (call from commandline: --dir "181220_BCCV00ANXX")
-params.dir = "181220_BCCV00ANXX"
+params.dir = "200311_AHNNC7DMXX"
 // flag for final process (stringtie_table_counts: --stc)
 params.stc = false
 
