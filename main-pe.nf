@@ -29,26 +29,46 @@ Channel.fromFilePairs(data + "${params.dir}/*_R{1,2}_001.fastq.gz", flat: true)
 // ** TRIM READS
 ////////////////////////////////////////////////
 
-process trimmomatic {
+process trim_reads {
 
    cpus large_core
    tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    input:
        set val(id), file(forward), file(reverse) from fq_pairs
 
    output:
        set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_fq_pairs
-       file("*_trimout.txt") into trim_log
+       set file("*.html"), file("*.json")  into trim_log
 
    """
-       trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
-       rm ${id}_1U.fq.gz
-       rm ${id}_2U.fq.gz
+       fastp -i $forward -I $reverse -o ${id}_R1.fq.gz -O ${id}_R2.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
    """
 }
 trimmed_fq_pairs.set { trimmed_reads_hisat }
+
+// process trim_reads {
+//
+//    cpus large_core
+//    tag { id }
+//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
+//
+//    input:
+//        set val(id), file(forward), file(reverse) from fq_pairs
+//
+//    output:
+//        set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_fq_pairs
+//        file("*_trimout.txt") into trim_log
+//
+//    """
+//        trimmomatic PE -threads ${large_core} $forward $reverse -baseout ${id}.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-PE.fa:2:80:10 MINLEN:50 &> ${id}_trimout.txt
+//        rm ${id}_1U.fq.gz
+//        rm ${id}_2U.fq.gz
+//    """
+// }
+// trimmed_fq_pairs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
