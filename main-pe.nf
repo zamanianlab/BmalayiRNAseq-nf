@@ -40,7 +40,7 @@ process trim_reads {
        set val(id), file(forward), file(reverse) from fq_pairs
 
    output:
-       set id, file("${id}_1P.fq.gz"), file("${id}_2P.fq.gz") into trimmed_fq_pairs
+       set id, file("${id}_R1.fq.gz"), file("${id}_R2.fq.gz") into trimmed_fq_pairs
        set file("*.html"), file("*.json")  into trim_log
 
    """
