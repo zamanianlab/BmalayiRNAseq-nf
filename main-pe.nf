@@ -9,7 +9,7 @@ large_core=config.large_core
 small_core=config.small_core
 
 // Additional params (--dir "200217_AHNHN3DMXX")
-params.dir = "200323_AHNMKFDMXX"
+params.dir = "200402_AHNNF3DMXX"
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
 
