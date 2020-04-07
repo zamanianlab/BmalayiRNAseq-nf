@@ -8,15 +8,27 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// Additional params (--dir "200217_AHNHN3DMXX")
-params.dir = "200402_AHNNF3DMXX"
+// Parameters
+// example: (--dir "200217_AHNHN3DMXX" --release "WBPS13" --species "dirofilaria_immitis" --prjn "PRJEB1797")
+
+params.dir = null
+if( !params.dir ) error "Missing dir parameter"
+println "release: $params.dir"
+
+params.release = null
+if( !params.release ) error "Missing release parameter"
+println "release: $params.release"
+
+params.species = null
+if( !params.species ) error "Missing species parameter"
+println "release: $params.species"
+
+params.prjn = null
+if( !params.species ) error "Missing prjn parameter"
+println "release: $params.prjn"
+
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
-
-//WB genome information
-params.release = "WBPS13"
-params.species = "dirofilaria_immitis" //brugia_malayi
-params.prjn = "PRJEB1797" //PRJNA10729
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (paired)
@@ -106,8 +118,6 @@ extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process hisat2_indexing {
 
-   // ** publishDir "${output}/reference/", mode: 'copy'
-
     input:
         file("geneset.gtf.gz") from geneset_hisat
         file("reference.fa.gz") from reference_hisat
@@ -125,8 +135,6 @@ process hisat2_indexing {
 }
 
 process build_hisat_index {
-
-//    publishDir "${output}/reference/", mode: 'copy'
 
     cpus large_core
 
