@@ -126,7 +126,7 @@ process hisat2_indexing {
 
 process build_hisat_index {
 
-    publishDir "${output}/reference/", mode: 'copy'
+//    publishDir "${output}/reference/", mode: 'copy'
 
     cpus large_core
 
