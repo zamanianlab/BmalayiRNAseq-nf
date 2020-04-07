@@ -186,6 +186,9 @@ process hisat2_stringtie {
 
 ////////////////////////////////////////////////
 // ** - STRINGTIE table counts & final commands that run on output dirs (run last with --stc flag)
+// **  add later:    grep -Hn 'reads\|overall' ${output}/expression/*.hisat2_log.txt  | awk '{print $1}' | sed 's/.hisat2_log.txt//g' | sed 's/%//g' > Hisat2_stats.txt
+//    publishDir "${output}/expression", mode: 'copy', pattern: 'Hisat2_stats.txt'
+//        file("Hisat2_stats.txt") into hisat2_stats
 ////////////////////////////////////////////////
 
 prepDE = file("${aux}/scripts/prepDE.py")
@@ -194,7 +197,6 @@ process stringtie_counts_final {
     echo true
 
     publishDir "${output}/counts", mode: 'copy', pattern: '*.csv'
-    publishDir "${output}/expression", mode: 'copy', pattern: 'Hisat2_stats.txt'
 
     cpus small_core
 
@@ -204,11 +206,9 @@ process stringtie_counts_final {
     output:
         file ("gene_count_matrix.csv") into gene_count_matrix
         file ("transcript_count_matrix.csv") into transcript_count_matrix
-        file("Hisat2_stats.txt")
 
     """
         python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
-        grep -Hn 'reads\|overall' ${output}/expression/*.hisat2_log.txt  | awk '{print $1}' | sed 's/.hisat2_log.txt//g' | sed 's/%//g' > Hisat2_stats.txt
 
     """
 }
