@@ -9,11 +9,11 @@ large_core=config.large_core
 small_core=config.small_core
 
 // Parameters
-// example: (--dir "200217_AHNHN3DMXX" --release "WBPS13" --species "dirofilaria_immitis" --prjn "PRJEB1797")
+// example: (--dir "200402_AHNNF3DMXX" --release "WBPS13" --species "dirofilaria_immitis" --prjn "PRJEB1797")
 
 params.dir = null
 if( !params.dir ) error "Missing dir parameter"
-println "release: $params.dir"
+println "dir: $params.dir"
 
 params.release = null
 if( !params.release ) error "Missing release parameter"
@@ -21,11 +21,11 @@ println "release: $params.release"
 
 params.species = null
 if( !params.species ) error "Missing species parameter"
-println "release: $params.species"
+println "species: $params.species"
 
 params.prjn = null
 if( !params.species ) error "Missing prjn parameter"
-println "release: $params.prjn"
+println "prjn: $params.prjn"
 
 // flag for final stringtie_table_counts process (--stc)
 params.stc = false
