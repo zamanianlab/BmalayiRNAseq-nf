@@ -8,15 +8,27 @@ output=config.output_location
 large_core=config.large_core
 small_core=config.small_core
 
-// Additional params (call from commandline: --dir "181220_BCCV00ANXX")
-params.dir = "200311_AHNNC7DMXX"
-// flag for final process (stringtie_table_counts: --stc)
-params.stc = false
+// Parameters
+// example: (--dir "200402_AHNNF3DMXX" --release "WBPS13" --species "dirofilaria_immitis" --prjn "PRJEB1797")
 
-//WB genome information
-params.release = "WBPS13"
-params.species = "dirofilaria_immitis" //brugia_malayi
-params.prjn = "PRJEB1797" //PRJNA10729
+params.dir = null
+if( !params.dir ) error "Missing dir parameter"
+println "dir: $params.dir"
+
+params.release = null
+if( !params.release ) error "Missing release parameter"
+println "release: $params.release"
+
+params.species = null
+if( !params.species ) error "Missing species parameter"
+println "species: $params.species"
+
+params.prjn = null
+if( !params.species ) error "Missing prjn parameter"
+println "prjn: $params.prjn"
+
+// flag for final stringtie_table_counts process (--stc)
+params.stc = false
 
 ////////////////////////////////////////////////
 // ** - Pull in fq files (single)
@@ -29,37 +41,57 @@ fqs = Channel.fromPath(data + "${params.dir}/*.fastq.gz")
 // ** TRIM READS
 ////////////////////////////////////////////////
 
-process trimmomatic {
+process trim_reads {
 
    cpus large_core
    tag { id }
-   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.html'
+   publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*.json'
 
    input:
        set val(id), file(reads) from fqs
 
    output:
-       set id_out, file("${id_out}_trim.fq.gz") into trimmed_fqs
-      // set val(id_out), file(id_out) into fq_trim
-       file("*_trimout.txt") into trim_log
+       set id, file("${id}_R1.fq.gz") into trimmed_fqs
+       set file("*.html"), file("*.json")  into trim_log
 
-   script:
-   id_out = id.replace('.fastq.gz', '')
+  script:
+      id_out = id.replace('.fastq.gz', '')
 
    """
-       trimmomatic SE -threads ${large_core} ${reads} ${id_out}_trim.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-SE.fa:2:80:10 MINLEN:50 &> ${id_out}_trimout.txt
-
+       fastp -i $reads -o ${id_out}_R1.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
    """
 }
 trimmed_fqs.set { trimmed_reads_hisat }
+
+// process trimmomatic {
+//
+//    cpus large_core
+//    tag { id }
+//    publishDir "${output}/trim_stats/", mode: 'copy', pattern: '*_trimout.txt'
+//
+//    input:
+//        set val(id), file(reads) from fqs
+//
+//    output:
+//        set id_out, file("${id_out}_trim.fq.gz") into trimmed_fqs
+//        file("*_trimout.txt") into trim_log
+//
+//    script:
+//    id_out = id.replace('.fastq.gz', '')
+//
+//    """
+//        trimmomatic SE -threads ${large_core} ${reads} ${id_out}_trim.fq.gz ILLUMINACLIP:/home/linuxbrew/.linuxbrew/Cellar/trimmomatic/0.36/share/trimmomatic/adapters/TruSeq3-SE.fa:2:80:10 MINLEN:50 &> ${id_out}_trimout.txt
+//
+//    """
+// }
+// trimmed_fqs.set { trimmed_reads_hisat }
 
 ////////////////////////////////////////////////
 // ** - Fetch genome (fa.gz) and gene annotation file (gtf.gz)
 ////////////////////////////////////////////////
 
 process fetch_genome {
-
-    publishDir "${output}/reference/", mode: 'copy'
 
     output:
         file("geneset.gtf.gz") into geneset_gtf
@@ -89,8 +121,6 @@ extract_splice = file("${aux}/scripts/hisat2_extract_splice_sites.py")
 
 process hisat2_indexing {
 
-   publishDir "${output}/reference/", mode: 'copy'
-
     input:
         file("geneset.gtf.gz") from geneset_hisat
         file("reference.fa.gz") from reference_hisat
@@ -108,8 +138,6 @@ process hisat2_indexing {
 }
 
 process build_hisat_index {
-
-    publishDir "${output}/reference/", mode: 'copy'
 
     cpus large_core
 
@@ -176,7 +204,7 @@ process stringtie_table_counts {
 
     echo true
 
-    publishDir "${output}/counts", mode: 'copy'
+    publishDir "${output}/counts", mode: 'copy', pattern: '*.csv'
 
     cpus small_core
 
