@@ -52,14 +52,14 @@ process trim_reads {
        set val(id), file(reads) from fqs
 
    output:
-       set id, file("${id}_R1.fq.gz") into trimmed_fqs
+       set id, file("${id_out}_R1.fq.gz") into trimmed_fqs
        set file("*.html"), file("*.json")  into trim_log
 
   script:
       id_out = id.replace('.fastq.gz', '')
 
    """
-       fastp -i $reads -o ${id_out}_R1.fq.gz -y -l 50 -h ${id}.html -j ${id}.json
+       fastp -i $reads -o ${id_out}_R1.fq.gz -y -l 50 -h ${id_out}.html -j ${id_out}.json
    """
 }
 trimmed_fqs.set { trimmed_reads_hisat }
