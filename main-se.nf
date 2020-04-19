@@ -216,7 +216,7 @@ process stringtie_table_counts {
         file ("transcript_count_matrix.csv") into transcript_count_matrix
 
     """
-        python ${prepDE} -i ${output}/expression -l 150 -g gene_count_matrix.csv -t transcript_count_matrix.csv
+        python ${prepDE} -i ${output}/expression -l 100 -g gene_count_matrix.csv -t transcript_count_matrix.csv
 
     """
 }
